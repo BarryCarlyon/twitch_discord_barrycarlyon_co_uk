@@ -27,52 +27,49 @@ module.exports = function(lib) {
                     return;
                 }
 
-                res.locals.links = false;
-                if (r.length == 1) {
-                    res.locals.links = r[0];
+                res.locals.links = r[0] ? r[0] : false;
 
-                    if (!req.session.checked) {
-                        req.session.checked = true;
-                        eventsub.validateAndCreate(req.session.user.twitch.id);
-                    }
-
-                    mysql_pool.query(
-                        'SELECT topic FROM eventsub WHERE twitch_user_id = ?',
-                        [
-                            req.session.user.twitch.id
-                        ],
-                        (e,r) => {
-                            if (e) {
-                                req.session.error = 'A database error occured';
-                                req.session.logged_in = false;
-                                res.redirect('/');
-                                return;
-                            }
-
-                            res.locals.eventsub = r.length;
-
-                            mysql_pool.query(
-                                'SELECT * FROM channels WHERE twitch_user_id = ?',
-                                [
-                                    req.session.user.twitch.id
-                                ],
-                                (e,r) => {
-                                    if (e) {
-                                        req.session.error = 'A database error occured';
-                                        req.session.logged_in = false;
-                                        res.redirect('/');
-                                        return;
-                                    }
-
-                                    res.locals.channel_data = r[0] ? r[0] : false;
-
-                                    next();
-                                }
-                            );
-                        }
-                    );
-                    return;
+                if (!req.session.checked && res.locals.links) {
+                    req.session.checked = true;
+                    eventsub.validateAndCreate(req.session.user.twitch.id);
                 }
+
+                mysql_pool.query(
+                    'SELECT topic FROM eventsub WHERE twitch_user_id = ?',
+                    [
+                        req.session.user.twitch.id
+                    ],
+                    (e,r) => {
+                        if (e) {
+                            req.session.error = 'A database error occured';
+                            req.session.logged_in = false;
+                            res.redirect('/');
+                            return;
+                        }
+
+                        res.locals.eventsub = r.length;
+
+                        mysql_pool.query(
+                            'SELECT * FROM channels WHERE twitch_user_id = ?',
+                            [
+                                req.session.user.twitch.id
+                            ],
+                            (e,r) => {
+                                if (e) {
+                                    req.session.error = 'A database error occured';
+                                    req.session.logged_in = false;
+                                    res.redirect('/');
+                                    return;
+                                }
+
+                                res.locals.channel_data = r[0] ? r[0] : false;
+
+                                next();
+                            }
+                        );
+                    }
+                );
+                return;
 
                 next();
             }
