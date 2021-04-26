@@ -10,12 +10,15 @@ block container
 
             h3 Test your Notification
 
-            p You can test your Webhook. Click this button to be send a test notification which will notify you! Use this to test this Application can talk to the right Channel
+            if links && links.discord_channel_id
+                p You can test your Webhook. Click this button to be send a test notification which will notify you! Use this to test this Application can talk to the right Channel
 
-            p
-                form(action="/admin/test/" method="post")
-                    input(type="submit" class="btn btn-primary" value="Send Test")
-            p This will return here once the message has been posted to your Discord and deleted again. Which'll take a few seconds
+                p
+                    form(action="/admin/test/" method="post")
+                        input(type="submit" class="btn btn-primary" value="Send Test")
+                p This will return here once the message has been posted to your Discord and deleted again. Which'll take a few seconds
+            else
+                p You need to <a href="/login/discord/">Link a Discord</a> first!
 
             h3 HELP
 
