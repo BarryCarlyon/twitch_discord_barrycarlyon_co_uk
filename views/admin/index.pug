@@ -1,0 +1,91 @@
+extends ../template
+
+block container
+    div(class="row")
+        div(class="col")
+            h3 Administration
+
+            p You can check your account detials to the right
+            p You can test your Live Notifications
+
+            h3 Test your Notification
+
+            p You can test your Webhook. Click this button to be send a test notification which will notify you!
+
+            p
+                form(action="/admin/test/" method="post")
+                    input(type="submit" class="btn btn-primary" value="Send Test")
+        div(class="col")
+            p(class="float-end")
+                a(href="/logout/") Logout
+            h3 Account Details
+
+            table(class="table")
+                tr
+                    th Twitch
+                    td #{session.user.twitch.display_name} / #{session.user.twitch.login}
+                tr
+                    th Twitch Feed
+                    if eventsub > 0
+                        td #{eventsub} / 3 OK
+                    else
+                        td Pending
+                tr
+                    th Discord
+                    if (links)
+                        td Connected to&nbsp;
+                            a(href="https://discord.com/channels/"+links.discord_guild_id+"/" + links.discord_channel_id) Guild/Channel
+                            br
+                            a(href="/login/discord/") Reconnect To Discord/Change Channel
+                    else
+                        td
+                            a(href="/login/discord/") Discord Link Required
+
+            form(action="/admin/recache/" method="post" class="float-end")
+                input(type="submit" class="btn btn-info" value="Force Recache")
+            h3 Current Stream Data
+            if !channel_data
+                p None on File yet
+            else
+                table(class="table")
+                    tr
+                        th Channel
+                        td
+                            a(href="https://twitch.tv/" + channel_data.twitch_login + "/" target="_blank") #{channel_data.twitch_display_name}
+                    tr
+                        th Live
+                        td #{channel_data.channel_live ? 'Live' : 'Offline'}
+                    tr
+                        th Title
+                        td #{channel_data.channel_title}
+                    tr
+                        th Game
+                        td #{channel_data.channel_game}
+    div(class="row")
+        div(class="col")
+            h3 Notification Log
+
+            table(class="table")
+                for event in events
+                    tr
+                        if (event.discord_type == 1)
+                            td Discord Test
+                        else if (event.discord_type == 2)
+                            td Discord Live
+                        else
+                            td Unknown
+
+                        td #{event.tos}
+                        td
+                            if event.status == 1
+                                a(href=event.discord_message_url target="_blank") Discord Message
+                        if event.status == 0
+                            td Pending
+                        else if event.status == 1
+                            td Ok
+                        else if event.status == 2
+                            td Failed
+                        else if event.status == 3
+                            td Deleted
+                        else
+                            td Unknown

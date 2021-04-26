@@ -1,0 +1,20 @@
+footer {
+    background: #111111;
+    position: fixed;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    border-top: 2px solid #DDDDDD;
+    line-height: 40px;
+    text-align: center;
+}
+
+#debuggery {
+    position: fixed;
+    bottom: 0px;
+    right: 0px;
+    width: 400px;
+    height: 200px;
+    background: #525c67;
+    z-index: 9001;
+}

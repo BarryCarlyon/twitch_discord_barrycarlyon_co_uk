@@ -1,0 +1,26 @@
+doctype html
+html
+    head
+        meta(charset="utf-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1")
+        link(href="/theme/bootstrap.css" rel="stylesheet")
+        link(href="/theme/style.css" rel="stylesheet")
+        block header_scripts
+        block title
+            title Barry's Twitch to Discord Notifications
+    body
+        block body
+            div(class="container-fluid")
+                block errors
+                    if error
+                        div(class="bg-danger")
+                            p #{error}
+                    if success
+                        div(class="bg-success")
+                            p #{success}
+                block container
+        block footer
+            pre(id="debuggery") #{debug_session}
+            footer Barry's Twitch to Discord Notifications
+        block footer_scripts
+            script(type="text/javascript" src="/theme/bootstrap.bundle.min.js")
