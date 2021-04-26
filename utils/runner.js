@@ -26,6 +26,7 @@ redis_subscriber.on('error', (err) => {
 
 var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ config, mysql_pool, redis_client });
 var eventsub = require(path.join(__dirname, '..', 'modules', 'eventsub'))({ config, mysql_pool, twitch });
+var discord = require(path.join(__dirname, '..', 'modules', 'discord'))({ config, mysql_pool, twitch });
 
 redis_subscriber.on('message', (chan, message) => {
     switch (chan) {
@@ -54,6 +55,8 @@ redis_subscriber.on('message', (chan, message) => {
             }
             break;
     }
+
+    // @Todo: if cost 1 kill subs for user
 });
 redis_subscriber.subscribe('twitch_discord_user.authorization.revoke');
 redis_subscriber.subscribe('twitch_discord_stream.offline');
@@ -86,27 +89,12 @@ function processUserDie(user_id) {
 }
 
 function processStreamEnd(broadcaster_user_id) {
+    console.log('processStreamDown', broadcaster_user_id);
     mysql_pool.query(
-        'UPDATE channels SET channel_live = 0 WHERE twitch_user_id = ?',
-        [
-            broadcaster_user_id
-        ],
-        (e,r) => {
-            if (e) {
-                console.log(e);
-                return;
-            }
-            console.log('StreamEnd', r);
-        }
-    );
-}
-
-
-function processStreamUp(broadcaster_user_id) {
-    mysql_pool.query(
-        'INSERT INTO notification_log(twitch_user_id, discord_type) VALUES (?,?)',
+        'INSERT INTO notification_log(twitch_user_id, notification_type, status) VALUES (?,?,?)',
         [
             broadcaster_user_id,
+            3,
             1
         ],
         (e,r) => {
@@ -115,10 +103,45 @@ function processStreamUp(broadcaster_user_id) {
                 return;
             }
 
-            var notification_id = r.insertId;
+            mysql_pool.query(
+                'UPDATE channels SET channel_live = 0 WHERE twitch_user_id = ?',
+                [
+                    broadcaster_user_id
+                ],
+                (e,r) => {
+                    if (e) {
+                        console.log(e);
+                        return;
+                    }
+                    console.log('StreamEnded', r.changedRows);
+                }
+            );
+        }
+    );
+}
+
+
+function processStreamUp(broadcaster_user_id) {
+    console.log('processStreamUp', broadcaster_user_id);
+    mysql_pool.query(
+        'INSERT INTO notification_log(twitch_user_id, notification_type, status) VALUES (?,?,?)',
+        [
+            broadcaster_user_id,
+            2,
+            1
+        ],
+        (e,r) => {
+            if (e) {
+                console.log(e);
+                return;
+            }
+
+            var eventsub_notification_id = r.insertId;
 
             mysql_pool.query(''
-                + 'SELECT discord_webhook_url, channel_live '
+                + 'SELECT l.discord_guild_id, l.discord_channel_id, l.discord_webhook_url, l.discord_template, '
+                + 'c.channel_title, c.channel_game, c.channel_live, '
+                + 'c.twitch_login, c.twitch_display_name '
                 + 'FROM channels c '
                 + 'LEFT JOIN links l ON l.twitch_user_id = c.twitch_user_id '
                 + 'WHERE c.twitch_user_id = ? AND channel_live = 0 AND discord_webhook_url != ?',
@@ -133,13 +156,13 @@ function processStreamUp(broadcaster_user_id) {
                     }
 
                     if (r.length != 1) {
-                        console.log('Already live');
+                        console.log('Already live, or invalid user');
 
                         mysql_pool.query(
                             'UPDATE notification_log SET status = 2, status_words = ? WHERE id = ?',
                             [
                                 'Already Live',
-                                notification_id
+                                eventsub_notification_id
                             ],
                             (e,r) => {
                                 if (e) {
@@ -151,28 +174,33 @@ function processStreamUp(broadcaster_user_id) {
                         return;
                     }
 
-                    // notify
-                    got({
-                        url: r[0].discord_webhook_url,
-                        method: 'POST',
-                        searchParams: {
-                            wait: true
-                        },
-                        json: {
-                            content: 'Now Live!'
-                        },
-                        responseType: 'json'
-                    })
-                    .then(resp => {
-                        console.log(resp.statusCode);
+                    var message = r[0].discord_template;
 
-                        var discord_message_id = resp.body.id;
+                    message = message.replace(/\[title\]/g, r[0].channel_title);
+                    message = message.replace(/\[game\]/g, r[0].channel_game);
+                    message = message.replace(/\[link\]/g, 'https://twitch.tv/' + r[0].twitch_login);
+                    message = message.replace(/\[display\]/g, r[0].twitch_display_name);
 
+                    discord.createNotification(
+                        r[0].discord_webhook_url,
+                        {
+                            twitch_user_id:     broadcaster_user_id,
+                            discord_guild_id:   r[0].discord_guild_id,
+                            discord_channel_id: r[0].discord_channel_id
+                        },
+                        {
+                            content: message
+                        },
+                        5,
+                        false
+                    )
+                    .then(notification_id => {
+                        console.log('woo', broadcaster_user_id);
                         mysql_pool.query(
-                            'UPDATE notification_log SET status = 1, discord_message_id = ? WHERE id = ?',
+                            'UPDATE notification_log SET status = ? WHERE id = ?',
                             [
-                                discord_message_id,
-                                notification_id
+                                1,
+                                eventsub_notification_id
                             ],
                             (e,r) => {
                                 if (e) {
@@ -182,27 +210,38 @@ function processStreamUp(broadcaster_user_id) {
                         );
                     })
                     .catch(err => {
-                        if (err.response) {
-                            console.log('Notification Failed', err.response.statusCode);
-                        } else {
-                            console.log('Notification Failed', err);
-                        }
-                    })
-
-                    // mark live
-                    mysql_pool.query(
-                        'UPDATE channels SET channel_live = 1 WHERE twitch_user_id = ?',
-                        [
-                            broadcaster_user_id
-                        ],
-                        (e,r) => {
-                            if (e) {
-                                console.log(e);
-                                return;
+                        console.log('error', broadcaster_user_id);
+                        mysql_pool.query(
+                            'UPDATE notification_log SET status = ? WHERE id = ?',
+                            [
+                                2,
+                                eventsub_notification_id
+                            ],
+                            (e,r) => {
+                                if (e) {
+                                    console.error('Database Error', e);
+                                }
                             }
-                            console.log('StreamUped', r);
-                        }
-                    );
+                        );
+                        //req.session.error = 'Failed to create test Notification';
+                    })
+                    .finally(() => {
+                        console.log('finally', broadcaster_user_id);
+                        // mark live
+                        mysql_pool.query(
+                            'UPDATE channels SET channel_live = 1 WHERE twitch_user_id = ?',
+                            [
+                                broadcaster_user_id
+                            ],
+                            (e,r) => {
+                                if (e) {
+                                    console.log(e);
+                                    return;
+                                }
+                                console.log('StreamUped', r.changedRows);
+                            }
+                        );
+                    });
                 }
             );
         }

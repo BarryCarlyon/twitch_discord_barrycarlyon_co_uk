@@ -140,11 +140,12 @@ app.get('/logout', (req,res) => {
 // modules
 var twitch = require(path.join(__dirname, 'modules', 'twitch'))({ config, mysql_pool, redis_client });
 var eventsub = require(path.join(__dirname, 'modules', 'eventsub'))({ config, mysql_pool, twitch });
+var discord = require(path.join(__dirname, 'modules', 'discord'))({ config, mysql_pool, twitch });
 
 // routes
 app.use('/eventsub/', require(path.join(__dirname, 'routes', 'eventsub'))({ config, mysql_pool, eventsub, redis_client }));
 app.use('/login/', require(path.join(__dirname, 'routes', 'login'))({ config, mysql_pool }));
-app.use('/admin/', require(path.join(__dirname, 'routes', 'admin'))({ config, mysql_pool, eventsub }));
+app.use('/admin/', require(path.join(__dirname, 'routes', 'admin'))({ config, mysql_pool, eventsub, discord }));
 
 // backup route
 app.get('/', (req,res) => {

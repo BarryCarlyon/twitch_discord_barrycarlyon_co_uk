@@ -15,6 +15,7 @@ block container
             p
                 form(action="/admin/test/" method="post")
                     input(type="submit" class="btn btn-primary" value="Send Test")
+                    p This will return here once the message has been posted to your Discord and deleted again. Which'll take a few seconds
         div(class="col")
             p(class="float-end")
                 a(href="/logout/") Logout
@@ -64,20 +65,27 @@ block container
     div(class="row")
         div(class="col")
             h3 Notification Log
+            p Last 10 notification events
 
             table(class="table")
                 for event in events
                     tr
-                        if (event.discord_type == 1)
+                        if (event.notification_type == 1)
                             td Discord Test
-                        else if (event.discord_type == 2)
+                        else if (event.notification_type == 2)
+                            td Twitch Stream Up
+                        else if (event.notification_type == 3)
+                            td Twitch Stream Down
+                        else if (event.notification_type == 4)
+                            td Twitch Stream Changed
+                        else if (event.notification_type == 5)
                             td Discord Live
                         else
                             td Unknown
 
                         td #{event.tos}
                         td
-                            if event.status == 1
+                            if event.notification_type == 5 && event.status == 1
                                 a(href=event.discord_message_url target="_blank") Discord Message
                         if event.status == 0
                             td Pending
@@ -86,6 +94,6 @@ block container
                         else if event.status == 2
                             td Failed
                         else if event.status == 3
-                            td Deleted
+                            td Sent and Deleted
                         else
                             td Unknown
