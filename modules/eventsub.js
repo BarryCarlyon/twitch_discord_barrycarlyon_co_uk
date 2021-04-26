@@ -326,10 +326,15 @@ module.exports = function(lib) {
                 eventsub.createRevoke();
                 return;
             }
-            if (resp.body.data[0].status != 'enabled') {
-                console.log('Sub is invalid, delete and create');
-                eventsub.deleteRevoke(resp.bdoy.data[0].id);
-                return;
+            for (var x=0;x<resp.body.data.length;x++) {
+                if (resp.body.data[x].transport.callback == config.twitch.eventsub.callback) {
+                    // this this instance
+                    if (resp.body.data[x].status != 'enabled') {
+                        console.log('Sub is invalid, delete and create');
+                        eventsub.deleteRevoke(resp.bdoy.data[0].id);
+                        return;
+                    }
+                }
             }
             console.log('Revoke is good!');
         })
