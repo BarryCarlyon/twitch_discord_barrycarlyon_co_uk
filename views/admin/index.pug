@@ -6,7 +6,7 @@ block container
             h3 Administration
 
             p You can check your account details to the right
-            p You can test your Live Notifications
+            p Make sure to Link a Discord Guild/Channel, as otherwise this tool just doesn't do anything for you!
 
             h3 Test your Notification
 
@@ -15,7 +15,11 @@ block container
             p
                 form(action="/admin/test/" method="post")
                     input(type="submit" class="btn btn-primary" value="Send Test")
-                    p This will return here once the message has been posted to your Discord and deleted again. Which'll take a few seconds
+            p This will return here once the message has been posted to your Discord and deleted again. Which'll take a few seconds
+
+            h3 HELP
+
+            p Find me <a href="https://twitter.com/barrycarlyon" target="twitter">@BarryCarlyon on Twitter</a> or BarryCarlyon#1698 on Discord
         div(class="col")
             p(class="float-end")
                 a(href="/logout/" class="btn btn-danger") Logout
