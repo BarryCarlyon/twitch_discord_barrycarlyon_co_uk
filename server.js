@@ -72,7 +72,6 @@ const session = sess({
     }),
     secret,
     resave: true,
-    saveUninitialized: false,
     saveUninitialized: true,
     cookie: {
         secure: false

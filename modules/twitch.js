@@ -55,9 +55,9 @@ module.exports = function(lib) {
         );
     }
     validateToken();
-    setTimeout(() => {
+    setInterval(() => {
         validateToken();
-    }, (15 * 60 * 1000));
+    }, (30 * 60 * 1000));
 
     function createToken() {
         got({
