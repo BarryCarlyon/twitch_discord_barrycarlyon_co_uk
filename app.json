@@ -1,0 +1,14 @@
+[
+    {
+        "name": "TwitchDiscord - Server",
+        "script": "server.js",
+        "watch": false,
+        "autorestart": true
+    },
+    {
+        "name": "TwitchDiscord - Runner",
+        "script": "utils/runner.js",
+        "watch": false,
+        "autorestart": true
+    }
+]
