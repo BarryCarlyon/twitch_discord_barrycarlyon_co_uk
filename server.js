@@ -124,7 +124,7 @@ app.use((req, res, next) => {
 
     // temp debug
     res.locals.session = req.session;
-    res.locals.debug_session = JSON.stringify(req.session, null, 4);
+    //res.locals.debug_session = JSON.stringify(req.session, null, 4);
 
     next();
 });

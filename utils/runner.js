@@ -30,7 +30,7 @@ var discord = require(path.join(__dirname, '..', 'modules', 'discord'))({ config
 
 redis_subscriber.on('message', (chan, message) => {
     switch (chan) {
-        case 'twitch_discord_user.authorization.revoke':
+        case 'twitch_discord:user.authorization.revoke':
             try {
                 message = JSON.parse(message);
                 processUserDie(message.event.user_id);
@@ -38,7 +38,7 @@ redis_subscriber.on('message', (chan, message) => {
                 console.log(e)
             }
             break;
-        case 'twitch_discord_stream.offline':
+        case 'twitch_discord:stream.offline':
             try {
                 message = JSON.parse(message);
                 processStreamEnd(message.event.broadcaster_user_id);
@@ -46,10 +46,18 @@ redis_subscriber.on('message', (chan, message) => {
                 console.log(e)
             }
             break;
-        case 'twitch_discord_stream.online':
+        case 'twitch_discord:stream.online':
             try {
                 message = JSON.parse(message);
                 processStreamUp(message.event.broadcaster_user_id);
+            } catch (e) {
+                console.log(e)
+            }
+            break;
+        case 'twitch_discord:channel.update':
+            try {
+                message = JSON.parse(message);
+                processChannelUpdate(message.event.broadcaster_user_id, message.event);
             } catch (e) {
                 console.log(e)
             }
@@ -58,9 +66,10 @@ redis_subscriber.on('message', (chan, message) => {
 
     // @Todo: if cost 1 kill subs for user
 });
-redis_subscriber.subscribe('twitch_discord_user.authorization.revoke');
-redis_subscriber.subscribe('twitch_discord_stream.offline');
-redis_subscriber.subscribe('twitch_discord_stream.online');
+redis_subscriber.subscribe('twitch_discord:user.authorization.revoke');
+redis_subscriber.subscribe('twitch_discord:stream.offline');
+redis_subscriber.subscribe('twitch_discord:stream.online');
+redis_subscriber.subscribe('twitch_discord:channel.update');
 
 
 
@@ -242,6 +251,57 @@ function processStreamUp(broadcaster_user_id) {
                             }
                         );
                     });
+                }
+            );
+        }
+    );
+}
+
+function processChannelUpdate(broadcaster_user_id, payload) {
+    mysql_pool.query(
+        'INSERT INTO notification_log(twitch_user_id, notification_type, status) VALUES (?,?,?)',
+        [
+            broadcaster_user_id,
+            4,
+            1
+        ],
+        (e,r) => {
+            if (e) {
+                console.log(e);
+                return;
+            }
+
+            var eventsub_notification_id = r.insertId;
+
+            mysql_pool.query(
+                'UPDATE channels SET twitch_login = ?, twitch_display_name = ?, channel_title = ?, channel_game = ? WHERE twitch_user_id = ?',
+                [
+                    payload.broadcaster_user_login,
+                    payload.broadcaster_user_name,
+                    payload.title,
+                    payload.category_name,
+                    payload.broadcaster_user_id
+                ],
+                (e,r) => {
+                    var state = 1;
+                    if (e) {
+                        state = 2;
+                    }
+
+                    mysql_pool.query(
+                        'UPDATE notification_log SET status = ? WHERE id = ?',
+                        [
+                            state,
+                            eventsub_notification_id
+                        ],
+                        (e,r) => {
+                            if (e) {
+                                console.error('Database Error', e);
+                            }
+
+                            console.log('processChannelUpdate done');
+                        }
+                    );
                 }
             );
         }

@@ -20,7 +20,8 @@ html
                             p #{success}
                 block container
         block footer
-            pre(id="debuggery") #{debug_session}
+            if debug_session
+                pre(id="debuggery") #{debug_session}
             footer Barry's Twitch to Discord Notifications
         block footer_scripts
             script(type="text/javascript" src="/theme/bootstrap.bundle.min.js")

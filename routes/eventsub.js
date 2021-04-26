@@ -98,10 +98,10 @@ module.exports = function(lib) {
             case 'notification':
                 res.status(200).send('Ok');
 
-                console.log('Got a notification', req.body.subscription.type);
+                console.log('Got a notification', req.body.subscription.type, 'send', 'twitch_discord:' + req.body.subscription.type);
 
                 redis_client.publish(
-                    'twitch_discord_' + req.body.subscription.type,
+                    'twitch_discord:' + req.body.subscription.type,
                     JSON.stringify(req.body),
                     (e,r) => {
                         if (e) {
