@@ -1,0 +1,67 @@
+extends template
+
+block container
+    p(class="float-end")
+        a(href="/" class="btn btn-primary") Return Home
+    h2 Privacy Policy
+
+    p This document serves as the Privacy Policy for https://twitch.discord.barrycarlyon.co.uk and covers this Service.
+
+    h3 Twitch Data You Give Us
+
+    p At login we collect the following information
+
+    ul
+        li Your Twitch UserID (example: 15185913)
+        li Your Twitch Username (example: barrycarlyon)
+        li Your Twitch Display Name (example: BarryCarlyon)
+
+    p This constitutes your Public Twitch information, at Login Twitch provides us a token that identifies your Twitch Account to this Service.
+
+    p This Token allows us to ask Twitch for your Public information which along with the above, would include your description, account type (affiliate/partner) and profile URL.
+
+    h3 Discord Data You Give Us
+
+    p After Twitch login you are directed to provide a Discord Guild/Channel combination to send Alerts to.
+
+    p We collect and store.
+
+    ul
+        li Your Discord User ID (example: 66285511559352320)
+        li The Destination Discord Guild ID (example: 504015559252377601)
+        li The Destination Discord Channel ID (example: 523673395221495808)
+
+    P Discord does not provide the Discord Guild name of Channel name.
+
+    p Discord will generate a Webhook for us to Post to, we collect and store that URL
+
+    h3 Twitch Channel Data We Collect
+
+    p After Setup is complete, we will fetch from Twitch the current Channel information for your channel and instruct Twitch to provide Channel Information updates when that Data changes, via EventSub.
+
+    p We collect and store the following Public items
+    ul
+        li Twitch Login/username (example: barrycarlyon)
+        li Twitch Display Name (example: BarryCarlyon)
+        li Channel Title (example: "A random title for the potential time I stream next time, where I'll probably be testing")
+        li Channel set Game/Category (example: "Elite: Dangerous")
+        li Channel Live Status
+
+    h3 Data we give to Third Parties
+
+    p We collect and store and give <strong>NO</strong> data to third parties, with the following exception:
+
+    p When your Channel changes state, title, of live status, we compile that into a Discord notification and send that to the Discord you Linked.
+
+    h3 Other Data we collect
+
+    p Your IP address and the pages you visit are recored to the Server access log, but cannot be identified as belonging to any paticular Twitch or Discord User ID.
+
+    h3 Summary
+
+    p We collect and store a number of public items and create a link between a TwitcH ID and a Discord Guild and Channel ID's. We do not collect and priviledgedd information as we only request Public Data.
+
+    p Examples shown on this page represent public information regarding "<a href="https://barrycarlyon.co.uk/" target="barrycarlyon">BarryCarlyon</a>" the creator of this site/tool
+
+    p(class="float-end")
+        a(href="/" class="btn btn-primary") Return Home

@@ -18,7 +18,7 @@ block container
                     p This will return here once the message has been posted to your Discord and deleted again. Which'll take a few seconds
         div(class="col")
             p(class="float-end")
-                a(href="/logout/") Logout
+                a(href="/logout/" class="btn btn-danger") Logout
             h3 Account Details
 
             table(class="table")
@@ -33,9 +33,9 @@ block container
                         td Pending
                 tr
                     th Discord
-                    if (links)
+                    if links && links.discord_channel_id
                         td Connected to&nbsp;
-                            a(href="https://discord.com/channels/"+links.discord_guild_id+"/" + links.discord_channel_id) Guild/Channel
+                            a(href="https://discord.com/channels/"+links.discord_guild_id+"/" + links.discord_channel_id target="_blank") Guild/Channel
                             br
                             a(href="/login/discord/") Reconnect To Discord/Change Channel
                     else

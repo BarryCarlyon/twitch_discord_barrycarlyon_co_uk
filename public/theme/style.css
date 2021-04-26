@@ -1,3 +1,7 @@
+body {
+    margin-bottom: 120px;
+}
+
 footer {
     background: #111111;
     position: fixed;

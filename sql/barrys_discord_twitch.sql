@@ -38,7 +38,7 @@ CREATE TABLE `links` (
   `discord_webhook_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `discord_webhook_token` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `discord_webhook_url` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `discord_template` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT 'LIVE! [title] - Playing [game] - <[link]> [display]',
+  `discord_template` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT '[display] NOW LIVE! [title] - Playing [game] - <[link]>',
   UNIQUE KEY `ref_id` (`ref_id`),
   UNIQUE KEY `links_twitch_user_id_idx` (`twitch_user_id`) USING BTREE,
   UNIQUE KEY `links_discord_user_id_idx` (`discord_user_id`) USING BTREE

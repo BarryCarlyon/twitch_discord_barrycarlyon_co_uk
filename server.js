@@ -137,6 +137,10 @@ app.get('/logout', (req,res) => {
     res.redirect('/');
 });
 
+app.get('/privacy', (req,res) => {
+    res.render('privacy');
+});
+
 // modules
 var twitch = require(path.join(__dirname, 'modules', 'twitch'))({ config, mysql_pool, redis_client });
 var eventsub = require(path.join(__dirname, 'modules', 'eventsub'))({ config, mysql_pool, twitch });
