@@ -326,17 +326,25 @@ module.exports = function(lib) {
                 eventsub.createRevoke();
                 return;
             }
+
+            var found = false;
             for (var x=0;x<resp.body.data.length;x++) {
                 if (resp.body.data[x].transport.callback == config.twitch.eventsub.callback) {
                     // this this instance
-                    if (resp.body.data[x].status != 'enabled') {
+                    if (resp.body.data[x].status == 'enabled') {
+                        found = true;
+                    } else {
                         console.log('Sub is invalid, delete and create');
                         eventsub.deleteRevoke(resp.bdoy.data[0].id);
                         return;
                     }
                 }
             }
-            console.log('Revoke is good!');
+            if (found) {
+                console.log('Revoke is good!');
+            } else {
+                eventsub.createRevoke();
+            }
         })
         .catch(err => {
             if (err.response) {
