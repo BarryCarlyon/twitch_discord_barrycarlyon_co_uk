@@ -53,8 +53,7 @@ To secure sessions with
 This means when the server restarts, it'll generate a new string
 And log everyone out
 */
-//var secret = crypto.randomBytes(64).toString('hex');
-var secret = 'restartsafe';
+var secret = crypto.randomBytes(64).toString('hex');
 
 /* Session */
 const sess = require('express-session');
