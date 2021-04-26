@@ -159,10 +159,9 @@ module.exports = function(lib) {
                 if (req.session.user.discord.webhook) {
                     mysql_pool.query(''
                         + 'INSERT INTO links (twitch_user_id, discord_user_id, discord_guild_id, discord_channel_id, discord_webhook_id, discord_webhook_token, discord_webhook_url) VALUES (?,?,?,?,?,?,?) '
-                        + 'ON DUPLICATE KEY UPDATE discord_user_id = ?, discord_guild_id = ?, discord_channel_id = ?, discord_webhook_id = ?, discord_webhook_token = ?, discord_webhook_url = ?',
+                        + 'ON DUPLICATE KEY UPDATE twitch_user_id = ?, discord_user_id = ?, discord_guild_id = ?, discord_channel_id = ?, discord_webhook_id = ?, discord_webhook_token = ?, discord_webhook_url = ?',
                         [
                             req.session.user.twitch.id,
-
                             req.session.user.discord_user.id,
                             req.session.user.discord.webhook.guild_id,
                             req.session.user.discord.webhook.channel_id,
@@ -170,6 +169,7 @@ module.exports = function(lib) {
                             req.session.user.discord.webhook.token,
                             req.session.user.discord.webhook.url,
 
+                            req.session.user.twitch.id,
                             req.session.user.discord_user.id,
                             req.session.user.discord.webhook.guild_id,
                             req.session.user.discord.webhook.channel_id,
@@ -233,6 +233,7 @@ module.exports = function(lib) {
                     console.error('Discord Error', err.response.statusCode, err.response.body);
                     // the oAuth dance failed
                     req.session.error = 'An Error occured: ' + ((err.response && err.response.body.message) ? err.response.body.message : 'Unknown');
+                    req.session.error_discord = err.response.body.code;
                 } else {
                     req.session.error = 'Code exchange Bad Error',
                     console.log('Error', err);

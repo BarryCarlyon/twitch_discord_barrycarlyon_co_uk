@@ -153,10 +153,9 @@ function processStreamUp(broadcaster_user_id) {
                 + 'c.twitch_login, c.twitch_display_name '
                 + 'FROM channels c '
                 + 'LEFT JOIN links l ON l.twitch_user_id = c.twitch_user_id '
-                + 'WHERE c.twitch_user_id = ? AND channel_live = 0 AND discord_webhook_url != ?',
+                + 'WHERE c.twitch_user_id = ? AND channel_live = 0 AND discord_webhook_url IS NOT NULL',
                 [
-                    broadcaster_user_id,
-                    ''
+                    broadcaster_user_id
                 ],
                 (e,r) => {
                     if (e) {

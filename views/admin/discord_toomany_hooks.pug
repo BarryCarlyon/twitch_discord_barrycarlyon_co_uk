@@ -1,0 +1,26 @@
+extends ../template
+
+block container
+    div(class="row")
+        div(class="col")
+            h3 Administration
+
+            p A Discord Error occured, you have Link/Relinked to Discord too many times!
+            p And Discord won't let use create a new Webhook.
+
+            p To fix this issue, on your Discord take the following steps
+
+            ol
+                li Open Server Settings
+                li Click Integrations
+                li Click "Manage" next to "#{application_name}"
+
+            p Then do one of the following
+            p - Either delete some webwooks
+            p -or-
+            p - Scroll to the bottom and click "Remove Integration"
+
+            p Then you can relink to Discord
+
+            p
+                a(href="/login/discord/") Relink to Discord

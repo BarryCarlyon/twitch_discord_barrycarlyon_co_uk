@@ -104,11 +104,30 @@ module.exports = function(lib) {
                         );
                     })
                     .catch(err => {
+                        var words = '';
                         if (err.response) {
                             console.error('Discord Error', err.response.statusCode, err.response.body);
                             // the oAuth dance failed
+                            words = err.response.body.message;
+
+                            if (err.response.body.code == 10015) {
+                                // dead Discord webhook
+                                mysql_pool.query(
+                                    'UPDATE links SET discord_webhook_id = null, discord_webhook_token = null, discord_webhook_url = null WHERE discord_webhook_url = ?',
+                                    [
+                                        url
+                                    ],
+                                    (e,r) => {
+                                        if (e) {
+                                            console.log(e);
+                                        }
+                                    }
+                                );
+                                // _probably_ need to kill the Twitch EventSubs?
+                            }
                         } else {
                             console.error('Discord Error', err);
+                            words = 'Unknown';
                         }
 
                         // screw this paticular DB error

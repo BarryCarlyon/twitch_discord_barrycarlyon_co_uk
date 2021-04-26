@@ -80,6 +80,18 @@ module.exports = function(lib) {
     });
 
     router.get('/', (req,res) => {
+        var discord_error = false;
+        if (req.session.hasOwnProperty('error_discord')) {
+            if (req.session.error_discord == 30007) {
+                delete req.session.error_discord;
+
+                res.render('admin/discord_toomany_hooks', {
+                    application_name: config.discord.application_name
+                });
+                return;
+            }
+        }
+
         mysql_pool.query(
             'SELECT * FROM notification_log WHERE twitch_user_id = ? ORDER BY tos DESC, id DESC LIMIT 0,10',
             [
