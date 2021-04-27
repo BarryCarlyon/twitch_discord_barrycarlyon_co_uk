@@ -15,6 +15,10 @@ It uses the following API reference documentation
 - [Discord oAuth2](https://discord.com/developers/docs/topics/oauth2) for Discord webhook Setup and Login
 - [Discord Webhooks](https://discord.com/developers/docs/resources/webhook) for talking to Webhooks
 
+## What does it look like?
+
+![Example Discord Notification](public/example.png)
+
 ## Running it yourself
 
 This system uses MySQL as a Database backend and Redis for session handling and message brokering between the two services
