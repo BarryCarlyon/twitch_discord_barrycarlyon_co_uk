@@ -83,11 +83,30 @@ const session = sess({
 //cookie: {
 //        maxAge: (30 * 60 * 1000)
 
-// this example sets the cookie to secure false
+// this sets the cookie to secure false
 // you should set to true when hosting over SSL
-// it's false for the http://localhost/ testing of this example.
+// it's false for the http://localhost/ and or Nginx Proxy pass
 
 app.use(session);
+
+/* sec sutff */
+const helmet = require('helmet');
+/* https://securityheaders.com/ */
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            defaultSrc: ["'self'"],
+            styleSrc:   ["'self'"],
+            scriptSrc:  ["'self'"],
+            objectSrc:  ["'self'"],
+            imgSrc: ["'self' https: data:"]
+        }
+    },
+
+    referrerPolicy: { policy: 'same-origin' },
+    featurePolicy: {}
+}));
 
 /*
 Generic Error logger
