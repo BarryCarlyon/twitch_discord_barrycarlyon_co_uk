@@ -40,6 +40,11 @@ or start the two jobs manually
 - node server.js
 - node utils/runner.js
 
+## License
+
+This project is Licensed under DO WHAT THE FUCK YOU WANT
+Image/logo assets remain the property/licensing of their resepective owners
+
 ## OMGLIEKWUT OHMYGOODNESS U SO MUCH HELP
 
 Thank you for the help I want to give you beer/coffee money -> Check the Funding/Sponsor details
