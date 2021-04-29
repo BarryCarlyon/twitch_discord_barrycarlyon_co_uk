@@ -93,7 +93,7 @@ module.exports = function(lib) {
 
                                                 return reject(err);
                                             });
-                                        }, 5000);
+                                        }, 10000);
 
                                         return;
                                     }
