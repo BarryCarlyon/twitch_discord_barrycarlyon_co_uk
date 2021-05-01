@@ -32,6 +32,7 @@ module.exports = function(lib) {
                 req.twitch_signature = xHub[1];
 
 /*
+                // example test included for reference
                 if (req.twitch_signature != req.twitch_hex) {
                     console.error('Signature Mismatch');
                 } else {
@@ -45,7 +46,7 @@ module.exports = function(lib) {
     router.post('/', (req, res) => {
         if (!req.twitch_hub) {
             console.error('EventSub: no Signature');
-            res.status(404).send('Route Not Found');
+            res.status(403).send('Missing EventSub Signature');
             return;
         }
 
@@ -55,30 +56,15 @@ module.exports = function(lib) {
             return;
         }
 
-        fs.appendFileSync(path.join(
-            __dirname,
-            '..',
-            'logs',
-            'webhooks.log'
-        ), JSON.stringify({
+        log_queue.push({
             body: req.body,
             headers: req.headers
-        }) + "\n");
-        // pretty print the last webhook to a file
-        fs.writeFileSync(path.join(
-            __dirname,
-            '..',
-            'logs',
-            'last_webhooks.log'
-        ), JSON.stringify({
-            body: req.body,
-            headers: req.headers
-        }, null, 4));
+        });
 
         switch (req.headers['twitch-eventsub-message-type']) {
             case 'webhook_callback_verification':
                 console.log('Process challenge');
-                // is it expected?
+                // is it an expected eventsub for one of the users on the platform?
 
                 // ok
                 res.status(200).send(encodeURIComponent(req.body.challenge));
@@ -96,6 +82,8 @@ module.exports = function(lib) {
                 res.status(200).send('Ok');
                 break;
             case 'notification':
+                // we got a message we'll OK
+                // then punt the reset for background processing
                 res.status(200).send('Ok');
 
                 console.log('Got a notification', req.body.subscription.type, 'send', 'twitch_discord:' + req.body.subscription.type);
@@ -121,3 +109,26 @@ module.exports = function(lib) {
 
     return router;
 }
+
+let log_queue = [];
+
+setTimeout(() => {
+    if (log_queue.length > 0) {
+        let line = log_queue.shift();
+
+        fs.appendFileSync(path.join(
+            __dirname,
+            '..',
+            'logs',
+            'webhooks.log'
+        ), JSON.stringify(line) + "\n");
+
+        // pretty print the last webhook to a file
+        fs.writeFileSync(path.join(
+            __dirname,
+            '..',
+            'logs',
+            'last_webhooks.log'
+        ), JSON.stringify(line, null, 4));
+    }
+}, 250);
