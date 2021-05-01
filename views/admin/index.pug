@@ -25,24 +25,25 @@ block container
             else
                 p You need to <a href="/login/discord/">Link a Discord</a> first!
 
-            form(action="/admin/update/" method="post")
-                div(class="float-end")
-                    input(type="submit" class="btn btn-primary" value="Save Customisation")
-                fieldset
-                    legend Format your Go Live
-                div(class="form-group")
-                    label(for="discord_template" class="form-label") Notification Template
-                    input(name="discord_template" id="discord_template" value=links.discord_template class="form-control")
+            if links && links.discord_channel_id
+                form(action="/admin/update/" method="post")
+                    div(class="float-end")
+                        input(type="submit" class="btn btn-primary" value="Save Customisation")
+                    fieldset
+                        legend Format your Go Live
+                    div(class="form-group")
+                        label(for="discord_template" class="form-label") Notification Template
+                        input(name="discord_template" id="discord_template" value=links.discord_template class="form-control")
 
-            p You can use the following replacement variables
-            ul
-                li [title] - Your Stream Title
-                li [game] - The Category you are set to
-                li [link] - The Link to your Stream, wrap with <kbd>&lt;&gt;</kbd> to suppress the Discord Preview
-                li [display] - Your Twitch <kbd>dIsPlAyNaMe</kbd>
-                li [user] - Your Twitch <kbd>login</kbd>
+                p You can use the following replacement variables
+                ul
+                    li [title] - Your Stream Title
+                    li [game] - The Category you are set to
+                    li [link] - The Link to your Stream, wrap with <kbd>&lt;&gt;</kbd> to suppress the Discord Preview
+                    li [display] - Your Twitch <kbd>dIsPlAyNaMe</kbd>
+                    li [user] - Your Twitch <kbd>login</kbd>
 
-            p You can include <kbd>@everyone</kbd>, <kbd>@here</kbd> or even <kbd>@somerole</kbd> to send a Ping to
+                p You can include <kbd>@everyone</kbd>, <kbd>@here</kbd> or even <kbd>@somerole</kbd> to send a Ping to
 
         div(class="col")
             p(class="float-end")
