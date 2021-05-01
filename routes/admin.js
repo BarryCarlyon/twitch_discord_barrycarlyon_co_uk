@@ -164,7 +164,7 @@ module.exports = function(lib) {
         });
     });
 
-    router.post('/update/', express.urlencoded(), (req,res) => {
+    router.post('/update/', express.urlencoded({extended: true}), (req,res) => {
         let discord_template =  req.body.discord_template;
 
         if (!discord_template) {
