@@ -59,9 +59,27 @@ block container
 
     h3 Summary
 
-    p We collect and store a number of public items and create a link between a TwitcH ID and a Discord Guild and Channel ID's. We do not collect and priviledged information as we only request Public Data.
+    p We collect and store a number of public items and create a link between a Twitch ID and a Discord Guild and Channel ID's. We do not collect and priviledged information as we only request Public Data.
 
     p Examples shown on this page represent public information regarding "<a href="https://barrycarlyon.co.uk/" target="barrycarlyon">BarryCarlyon</a>" the creator of this site/tool
+
+    h3 Termination
+
+    p Currently the easiest method to Terminate this service is to visit <a href="https://www.twitch.tv/settings/connections" target="twitch">Twitch Settings/Connections</a>, scroll to "BarryCarlyon's Super Simple Discord Notifications Platform" and click the [Disconnect] Button
+
+    img(class="img-fluid" src="/disconnect_twitch.png" title="How to use Twitch Settings/Connections to Disconnect this platform" alt="How to use Twitch Settings/Connections to Disconnect this platform")
+
+    p This will terminate the connection between Twitch and this service, but not Disord and this Service. To do that on your Discord server take the following steps
+    ol
+        li Visit your Server
+        li Go to Server Settings
+        li Click Integration
+        li Under Bots and Apps, Click Manage on "BarryCarlyon's Super Simple Discord Notifications Platform" entry
+        li Click "Remove Integration"
+
+    img(class="img-fluid" src="/disconnect_discord.png" title="How to use Discord Server Integrations to Disconnect this platform" alt="How to use Discord Server Integrations to Disconnect this platform")
+
+    p Thats it!
 
     p(class="float-end")
         a(href="/" class="btn btn-primary") Return Home
