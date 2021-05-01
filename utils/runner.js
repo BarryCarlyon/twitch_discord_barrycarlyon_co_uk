@@ -198,7 +198,15 @@ function processStreamUp(broadcaster_user_id) {
                             discord_channel_id: r[0].discord_channel_id
                         },
                         {
-                            content: message
+                            content: message,
+                            username: 'BarryCarlyon\'s Discord Notifications',
+                            avatar_url: 'https://twitch.discord.barrycarlyon.co.uk/logo.png',
+                            allowed_mentions: {
+                                parse: [
+                                    "everyone",
+                                    "roles"
+                                ]
+                            }
                         },
                         5,
                         false

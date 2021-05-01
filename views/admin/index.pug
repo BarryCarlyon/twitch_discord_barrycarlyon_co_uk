@@ -9,29 +9,40 @@ block container
             p Make sure to Link a Discord Guild/Channel, as otherwise this tool just doesn't do anything for you!
 
             if links && links.discord_channel_id
-                form(action="/admin/test/" method="post" class="float-end")
-                    input(type="submit" class="btn btn-primary" value="Send Test")
+                form(action="/admin/test/live/" method="post" class="float-end")
+                    input(type="submit" class="btn btn-primary" value="Send Live Test")
+                form(action="/admin/test/chan/" method="post" class="float-end")
+                    input(type="submit" class="btn btn-info" value="Send Chan. Test")
             h3 Test your Notification
 
             if links && links.discord_channel_id
-                p You can test your Webhook. Click this button to be send a test notification which will notify you! Use this to test this Application can talk to the right Channel. This will return here once the message has been posted to your Discord and deleted again. Which&#39;ll take a few seconds
+                p You can test your Webhook.
+                ul
+                    li Click "Send Chan. Text" to be send a test notification which will notify just you!
+                    li Click "Send Live Test" to test your Live Message with the customsation below, it won't replace the values!
+                p Use this to test this Application can talk to the right Channel, and test your message format.
+                p This will return here once the message has been posted to your Discord and deleted again. Which&#39;ll take a few seconds, to give you time to look at it.
             else
                 p You need to <a href="/login/discord/">Link a Discord</a> first!
 
             form(action="/admin/update/" method="post")
+                div(class="float-end")
+                    input(type="submit" class="btn btn-primary" value="Save Customisation")
                 fieldset
                     legend Format your Go Live
                 div(class="form-group")
                     label(for="discord_template" class="form-label") Notification Template
                     input(name="discord_template" id="discord_template" value=links.discord_template class="form-control")
 
-            p You can use the follow replacement variables
+            p You can use the following replacement variables
             ul
                 li [title] - Your Stream Title
                 li [game] - The Category you are set to
-                li [link] - The Link to your Stream, wrap with <pre>&lt;&gt;</pre> to suppress the Discord Preview
-                li [display] - Your Twitch <pre>dIsPlAyNaMe</pre>
-                li [user] - Your Twitch <pre>login</pre>
+                li [link] - The Link to your Stream, wrap with <kbd>&lt;&gt;</kbd> to suppress the Discord Preview
+                li [display] - Your Twitch <kbd>dIsPlAyNaMe</kbd>
+                li [user] - Your Twitch <kbd>login</kbd>
+
+            p You can include <kbd>@everyone</kbd>, <kbd>@here</kbd> or event <kbd>@somerole</kbd> to send a Ping to
 
         div(class="col")
             p(class="float-end")
