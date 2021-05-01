@@ -112,7 +112,7 @@ module.exports = function(lib) {
 
 let log_queue = [];
 
-setTimeout(() => {
+setInterval(() => {
     if (log_queue.length > 0) {
         let line = log_queue.shift();
 
