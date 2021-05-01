@@ -185,10 +185,15 @@ function processStreamUp(broadcaster_user_id) {
 
                     var message = r[0].discord_template;
 
-                    message = message.replace(/\[title\]/g, r[0].channel_title);
-                    message = message.replace(/\[game\]/g, r[0].channel_game);
                     message = message.replace(/\[link\]/g, 'https://twitch.tv/' + r[0].twitch_login);
                     message = message.replace(/\[display\]/g, r[0].twitch_display_name);
+                    message = message.replace(/\[user\]/g, r[0].twitch_login);
+                    // these should be last
+                    // to stop a title containing [user] from being replaced
+                    // for example
+                    message = message.replace(/\[game\]/g, r[0].channel_game);
+                    // same for [game]
+                    message = message.replace(/\[title\]/g, r[0].channel_title);
 
                     discord.createNotification(
                         r[0].discord_webhook_url,
