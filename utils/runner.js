@@ -75,6 +75,7 @@ redis_subscriber.subscribe('twitch_discord:channel.update');
 
 
 function processUserDie(user_id) {
+    console.log('Terminating', user_id);
     mysql_pool.query(
         'SELECT eventsub_id FROM eventsub WHERE twitch_user_id = ?',
         [
@@ -122,7 +123,7 @@ function processStreamEnd(broadcaster_user_id) {
                         console.log(e);
                         return;
                     }
-                    console.log('StreamEnded', r.changedRows);
+                    console.log('StreamEnded', broadcaster_user_id, r.changedRows);
                 }
             );
         }
@@ -246,7 +247,7 @@ function processStreamUp(broadcaster_user_id) {
                                     console.log(e);
                                     return;
                                 }
-                                console.log('StreamUped', r.changedRows);
+                                console.log('StreamUped', broadcaster_user_id, r.changedRows);
                             }
                         );
                     });
@@ -257,6 +258,7 @@ function processStreamUp(broadcaster_user_id) {
 }
 
 function processChannelUpdate(broadcaster_user_id, payload) {
+    console.log('processChannelUpdate', broadcaster_user_id);
     mysql_pool.query(
         'INSERT INTO notification_log(twitch_user_id, notification_type, status) VALUES (?,?,?)',
         [
@@ -298,7 +300,7 @@ function processChannelUpdate(broadcaster_user_id, payload) {
                                 console.error('Database Error', e);
                             }
 
-                            console.log('processChannelUpdate done');
+                            console.log('processChannelUpdate', broadcaster_user_id, 'done');
                         }
                     );
                 }
