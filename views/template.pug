@@ -31,15 +31,15 @@ html
             div(class="container-fluid")
                 block errors
                     if error
-                        div(class="bg-danger")
+                        div(class="aprompt bg-danger")
                             p #{error}
                     if success
-                        div(class="bg-success")
+                        div(class="aprompt bg-success")
                             p #{success}
                 block container
         block footer
             if debug_session
                 pre(id="debuggery") #{debug_session}
-            footer BarryCarlyon's Super Simple Discord Notifications Platforms
+            footer BarryCarlyon's Super Simple Discord Notifications Platforms - <a href="https://twitter.com/barrycarlyon">@BarryCarlyon</a>
         block footer_scripts
             script(type="text/javascript" src="/theme/bootstrap.bundle.min.js")

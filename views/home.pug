@@ -31,12 +31,13 @@ block container
                 li
                     a(href="https://paypal.me/BCarlyon" target="paypal") PayPal.me
         div(class="col")
-            h3 Getting Started
+            div(class="widget")
+                h3 Getting Started
 
-            p Connect with Twitch to continue
-            p
-                a(href="/login/twitch/")
-                    img(src="/connect_twitch.png" alt="Connect with Twitch" title="Connect with Twitch")
+                p Connect with Twitch to continue
+                p
+                    a(href="/login/twitch/")
+                        img(src="/connect_twitch.png" alt="Connect with Twitch" title="Connect with Twitch")
 
             h3 Privacy Policy
 
@@ -54,9 +55,11 @@ block container
                 li
                     a(href="https://barrycarlyon.co.uk/wordpress/contact/" target="contact") Drop me an Email
 
-            h3 Quick Start
+            div(class="widget")
+                h3 Quick Start
 
-            p This tool lets the <i>Twitch Channel Owner</i> <strong>only</strong> setup the "Twitch to Discord Notification".
-            p As to use EventSub for zero cost requires permission from the <i>Twitch Channel Owner</i>.
-            p So the <i>Twitch Channel Owner</i> will need to Login, then click "<strong>Link a Discord</strong>"
-            p And that is it. There is a test button to send a "test" notification to check the right Discord Channel is selected, which will self delete.
+                p This tool lets the <strong>Twitch Channel Owner</strong> <strong>only</strong> setup the "Twitch to Discord Notification".
+                p As to use EventSub for zero cost requires permission from the <i>Twitch Channel Owner</i>.
+                p So the <strong>Twitch Channel Owner</strong> will need to Login, then click "<strong>Link a Discord</strong>"
+                p And that is it.
+                p There is a test button to send a "test" notification to check the right Discord Channel is selected, which will the self delete that test message after.

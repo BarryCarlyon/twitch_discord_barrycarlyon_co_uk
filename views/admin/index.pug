@@ -8,21 +8,31 @@ block container
             p You can check your account details to the right
             p Make sure to Link a Discord Guild/Channel, as otherwise this tool just doesn't do anything for you!
 
+            if links && links.discord_channel_id
+                form(action="/admin/test/" method="post" class="float-end")
+                    input(type="submit" class="btn btn-primary" value="Send Test")
             h3 Test your Notification
 
             if links && links.discord_channel_id
-                p You can test your Webhook. Click this button to be send a test notification which will notify you! Use this to test this Application can talk to the right Channel
-
-                p
-                    form(action="/admin/test/" method="post")
-                        input(type="submit" class="btn btn-primary" value="Send Test")
-                p This will return here once the message has been posted to your Discord and deleted again. Which'll take a few seconds
+                p You can test your Webhook. Click this button to be send a test notification which will notify you! Use this to test this Application can talk to the right Channel. This will return here once the message has been posted to your Discord and deleted again. Which&#39;ll take a few seconds
             else
                 p You need to <a href="/login/discord/">Link a Discord</a> first!
 
-            h3 HELP
+            form(action="/admin/update/" method="post")
+                fieldset
+                    legend Format your Go Live
+                div(class="form-group")
+                    label(for="discord_template" class="form-label") Notification Template
+                    input(name="discord_template" id="discord_template" value=links.discord_template class="form-control")
 
-            p Need a hand or want to make a feature suggestion? Either find me <a href="https://twitter.com/barrycarlyon" target="twitter">@BarryCarlyon on Twitter</a> or BarryCarlyon#1698 on Discord
+            p You can use the follow replacement variables
+            ul
+                li [title] - Your Stream Title
+                li [game] - The Category you are set to
+                li [link] - The Link to your Stream, wrap with <pre>&lt;&gt;</pre> to suppress the Discord Preview
+                li [display] - Your Twitch <pre>dIsPlAyNaMe</pre>
+                li [user] - Your Twitch <pre>login</pre>
+
         div(class="col")
             p(class="float-end")
                 a(href="/logout/" class="btn btn-danger") Logout
@@ -104,3 +114,9 @@ block container
                             td Sent and Deleted
                         else
                             td Unknown
+    div(class="row")
+        div(class="col")
+        div(class="col")
+            h3 HELP, I need help
+
+            p Need a hand or want to make a feature suggestion? Either find me <a href="https://twitter.com/barrycarlyon" target="twitter">@BarryCarlyon on Twitter</a> or BarryCarlyon#1698 on Discord
