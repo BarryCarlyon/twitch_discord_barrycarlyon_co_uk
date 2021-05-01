@@ -22,3 +22,15 @@ footer {
     background: #525c67;
     z-index: 9001;
 }
+
+.aprompt {
+    padding: 5px;
+}
+.widget {
+    text-align: center;
+    box-sizing: border-box;
+    padding: 20px;
+    border: 2px solid #FFFFFF;
+    border-radius: 20px;
+    margin-bottom: 20px;
+}

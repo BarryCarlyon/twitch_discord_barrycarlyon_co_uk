@@ -77,7 +77,7 @@ module.exports = function(lib) {
     });
 
     router.get('/', (req,res) => {
-        var discord_error = false;
+        let discord_error = false;
         if (req.session.hasOwnProperty('error_discord')) {
             if (req.session.error_discord == 30007) {
                 delete req.session.error_discord;
@@ -95,7 +95,7 @@ module.exports = function(lib) {
                 req.session.user.twitch.id
             ],
             (e,r) => {
-                var events = [];
+                let events = [];
                 if (e) {
                     console.log(e);
                 } else {
@@ -116,12 +116,18 @@ module.exports = function(lib) {
         res.redirect('/admin/');
     });
 
-    router.post('/test/', async (req,res) => {
+    router.post('/test/:which', async (req,res) => {
         if (!res.locals.links) {
             req.session.error = 'Cannot test a non existant webhook';
             res.redirect('/admin/');
             return;
         }
+
+        let content = 'Hello <@' + res.locals.links.discord_user_id + '> Testing! This message will self destruct!';
+        if (req.params.which == 'live') {
+            content = res.locals.links.discord_template;
+        }
+
         discord.createNotification(
             res.locals.links.discord_webhook_url,
             {
@@ -130,7 +136,16 @@ module.exports = function(lib) {
                 discord_channel_id: res.locals.links.discord_channel_id
             },
             {
-                content: 'Hello <@' + res.locals.links.discord_user_id + '> Testing! This message will self destruct!'
+                content,
+                username: 'BarryCarlyon\'s Discord Notifications',
+                avatar_url: 'https://twitch.discord.barrycarlyon.co.uk/logo.png',
+                allowed_mentions: {
+                    parse: [
+                        "everyone",
+                        "roles",
+                        "users"
+                    ]
+                }
             },
             1,
             true
@@ -147,6 +162,40 @@ module.exports = function(lib) {
             console.log('finally');
             res.redirect('/admin/');
         });
+    });
+
+    router.post('/update/', express.urlencoded(), (req,res) => {
+        let discord_template =  req.body.discord_template;
+
+        if (!discord_template) {
+            req.session.error = 'No Template specified';
+            res.redirect('/admin/');
+            return;
+        }
+
+        if (discord_template.length <= 0) {
+            req.session.error = 'Difficult to send a notification if the message is blank!';
+            res.redirect('/admin/');
+            return;
+        }
+
+        mysql_pool.query(
+            'UPDATE links SET discord_template = ? WHERE twitch_user_id = ?',
+            [
+                discord_template,
+                req.session.user.twitch.id
+            ],
+            (e,r) => {
+                if (e) {
+                    console.error('discord_template', e);
+                    req.session.error = 'A Database Error occured updating your template';
+                } else if (r.affectedRows >= 1) {
+                    req.session.success = 'Updated your Go Live Message';
+                }
+
+                res.redirect('/admin/');
+            }
+        );
     });
 
     return router;
