@@ -103,6 +103,12 @@ module.exports = function(lib) {
     });
 
     router.get('/discord/', (req,res) => {
+        if (!req.session.user) {
+            // no user in the session
+            res.redirect('/');
+            return;
+        }
+
         req.session.user.discord = false;
         req.session.user.discord_user = false;
         //req.session.user.discord_access = false;
