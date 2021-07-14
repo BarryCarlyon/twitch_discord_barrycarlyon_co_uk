@@ -33,7 +33,7 @@ block container
                         legend Format your Go Live
                     div(class="form-group")
                         label(for="discord_template" class="form-label") Notification Template
-                        input(name="discord_template" id="discord_template" value=links.discord_template class="form-control")
+                        textarea(name="discord_template" id="discord_template" class="form-control" rows="3") #{links.discord_template}
 
                 p You can use the following replacement variables
                 ul
