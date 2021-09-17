@@ -27,6 +27,9 @@
     "pug": "^3.0.2",
     "redis": "^3.1.2"
   },
+  "directories": {
+    "doc": "docs"
+  },
   "keywords": [
     "twitch",
     "discord",
