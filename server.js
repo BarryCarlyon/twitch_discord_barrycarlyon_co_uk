@@ -56,7 +56,7 @@ And log everyone out
 var secret = crypto.randomBytes(64).toString('hex');
 
 /* Session */
-const sess = require('express-session');
+const session = require('express-session');
 const RedisStore = require('connect-redis')(sess);
 // Usually you'll put the node process
 // behind a proxy such as nginx
@@ -65,8 +65,12 @@ const RedisStore = require('connect-redis')(sess);
 // see also https://expressjs.com/en/guide/behind-proxies.html
 // for other options you may want to use something more specific than a true
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
 
-const session = sess({
+// security see https://expressjs.com/en/advanced/best-practice-security.html
+
+app.use(session({
+    name: 'barryssuperdiscord',
     store: new RedisStore({
         client: redis_client
     }),
@@ -74,22 +78,15 @@ const session = sess({
     resave: true,
     saveUninitialized: true,
     cookie: {
-        secure: false
+        secure: true,
+        httpOnly: true,
+        domain: 'twitch.discord.barrycarlyon.co.uk',
+        expires: new Date(Date.now() + 60 * 60 * 1000)
     },
     rolling: true
-});
+}));
 
-// you can set the cookie max age
-//cookie: {
-//        maxAge: (30 * 60 * 1000)
-
-// this sets the cookie to secure false
-// you should set to true when hosting over SSL
-// it's false for the http://localhost/ and or Nginx Proxy pass
-
-app.use(session);
-
-/* sec sutff */
+/* more sec sutff */
 const helmet = require('helmet');
 /* https://securityheaders.com/ */
 app.use(helmet({
