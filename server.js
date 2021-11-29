@@ -57,7 +57,7 @@ var secret = crypto.randomBytes(64).toString('hex');
 
 /* Session */
 const session = require('express-session');
-const RedisStore = require('connect-redis')(sess);
+const RedisStore = require('connect-redis')(session);
 // Usually you'll put the node process
 // behind a proxy such as nginx
 // so that proxy will handle the SSL Certs
