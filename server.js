@@ -80,8 +80,7 @@ app.use(session({
     cookie: {
         secure: true,
         httpOnly: true,
-        domain: 'twitch.discord.barrycarlyon.co.uk',
-        expires: new Date(Date.now() + 60 * 60 * 1000)
+        domain: 'twitch.discord.barrycarlyon.co.uk'
     },
     rolling: true
 }));
