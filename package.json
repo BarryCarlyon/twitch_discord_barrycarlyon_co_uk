@@ -19,10 +19,10 @@
   "homepage": "https://github.com/BarryCarlyon/twitch_discord_barrycarlyon_co_uk#readme",
   "dependencies": {
     "connect-redis": "^6.0.0",
-    "express": "^4.17.1",
+    "express": "^4.17.2",
     "express-session": "^1.17.2",
     "got": "^11.8.3",
-    "helmet": "^4.6.0",
+    "helmet": "^5.0.2",
     "mysql": "^2.18.1",
     "pug": "^3.0.2",
     "redis": "^3.1.2"
