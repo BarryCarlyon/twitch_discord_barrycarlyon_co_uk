@@ -12,45 +12,39 @@ module.exports = function(lib) {
     router.use(express.json({
         verify: function(req, res, buf, encoding) {
             // is there a hub to verify against
-            req.twitch_hub = false;
             if (req.headers && req.headers.hasOwnProperty('twitch-eventsub-message-signature')) {
-                req.twitch_hub = true;
-
                 // id for dedupe
-                var id = req.headers['twitch-eventsub-message-id'];
+                let id = req.headers['twitch-eventsub-message-id'];
                 // check age
-                var timestamp = req.headers['twitch-eventsub-message-timestamp'];
+                let timestamp = req.headers['twitch-eventsub-message-timestamp'];
 
-                var xHub = req.headers['twitch-eventsub-message-signature'].split('=');
+                let xHub = req.headers['twitch-eventsub-message-signature'].split('=');
 
                 // you could do
                 // req.twitch_hex = crypto.createHmac(xHub[0], config.hook_secret)
                 // but we know Twitch always uses sha256
-                req.twitch_hex = crypto.createHmac('sha256', config.twitch.eventsub.secret)
+                let test_signature = crypto.createHmac('sha256', config.twitch.eventsub.secret)
                     .update(id + timestamp + buf)
                     .digest('hex');
-                req.twitch_signature = xHub[1];
+                //req.twitch_signature = xHub[1];
+                req.twitch_signature_valid = (test_signature == xHub[1]);
 
-/*
-                // example test included for reference
-                if (req.twitch_signature != req.twitch_hex) {
-                    console.error('Signature Mismatch');
-                } else {
-                    console.log('Signature OK');
-                }
-*/
+                // as an API style/EventSub handler
+                // force set a/ensure a correct content type header
+                // for all event sub routes
+                res.set('Content-Type', 'text/plain');
             }
         }
     }));
 
     router.post('/', (req, res) => {
-        if (!req.twitch_hub) {
+        if (!req.headers.hasOwnProperty('twitch-eventsub-message-signature')) {
             console.error('EventSub: no Signature');
             res.status(403).send('Missing EventSub Signature');
             return;
         }
 
-        if (req.twitch_signature != req.twitch_hex) {
+        if (!req.twitch_signature_valid) {
             console.error('EventSub: invalid Signature');
             res.status(403).send('Invalid Signature');
             return;
