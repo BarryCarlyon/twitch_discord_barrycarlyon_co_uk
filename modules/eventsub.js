@@ -340,9 +340,8 @@ module.exports = function(lib) {
                     }
                 }
             }
-            if (found) {
-                //console.log('Revoke is good!');
-            } else {
+            if (!found) {
+                // (re)create the Revoker
                 eventsub.createRevoke();
             }
         })
