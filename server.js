@@ -50,7 +50,6 @@ This means when the server restarts, it'll generate a new string
 And log everyone out
 */
 var secret = crypto.randomBytes(64).toString('hex');
-secret = 'cake';
 
 /* Session */
 const session = require('express-session');
