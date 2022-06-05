@@ -25,7 +25,7 @@
     "helmet": "^5.1.0",
     "mysql": "^2.18.1",
     "pug": "^3.0.2",
-    "redis": "^3.1.2",
+    "redis": "^4.1.0",
     "tsscmp": "^1.0.6"
   },
   "directories": {

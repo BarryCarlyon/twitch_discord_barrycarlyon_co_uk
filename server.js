@@ -35,11 +35,13 @@ http.listen(config.server.listen, () => {
 const mysql = require('mysql');
 const mysql_pool = mysql.createPool(config.database);
 
-const redis = require('redis');
-const redis_client = redis.createClient();
+const { createClient } = require("redis");
+
+const redis_client = createClient();
 redis_client.on('error', (err) => {
     console.error('REDIS Error', err);
 });
+redis_client.connect();
 
 /*
 Generate a random string at start up
@@ -63,10 +65,13 @@ app.disable('x-powered-by');
 
 // security see https://expressjs.com/en/advanced/best-practice-security.html
 
+let sessionRedis = createClient({ legacyMode: true })
+sessionRedis.connect().catch(console.error)
+
 app.use(session({
     name: 'barryssuperdiscord',
     store: new RedisStore({
-        client: redis_client
+        client: sessionRedis
     }),
     secret,
     resave: true,

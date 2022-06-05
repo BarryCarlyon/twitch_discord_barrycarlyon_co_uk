@@ -94,16 +94,10 @@ module.exports = function(lib) {
 
                 console.log('Got a notification', req.body.subscription.type, 'send', 'twitch_discord:' + req.body.subscription.type);
 
-                redis_client.publish(
+                // fire and forget
+                redis_client.PUBLISH(
                     'twitch_discord:' + req.body.subscription.type,
-                    JSON.stringify(req.body),
-                    (e,r) => {
-                        if (e) {
-                            console.log('Redis Broadcast Error', e);
-                        } else {
-                            // done
-                        }
-                    }
+                    JSON.stringify(req.body)
                 );
 
                 break;
