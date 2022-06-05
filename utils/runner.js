@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 require('dotenv').config({
-    path: '../.env'
+    path: path.join(__dirname, '..', '.env')
 });
 
 const mysql = require('mysql');
@@ -86,6 +86,8 @@ subscriber
 
 function processUserDie(user_id) {
     console.log('Terminating', user_id);
+
+    // find stored EventSub ID's to termiante
     mysql_pool.query(
         'SELECT eventsub_id FROM eventsub WHERE twitch_user_id = ?',
         [
@@ -103,6 +105,20 @@ function processUserDie(user_id) {
             for (var x=0;x<r.length;x++) {
                 console.log('Terminate', user_id, r[x].eventsub_id);
                 eventsub.unsubscribe(r[x].eventsub_id);
+            }
+        }
+    );
+
+    // force set the channel to Not Live
+    mysql_pool.query(
+        'UPDATE channels SET channel_live = 0 WHERE twitch_user_id = ?',
+        [
+            user_id
+        ],
+        (e,r) => {
+            if (e) {
+                console.log(e);
+                return;
             }
         }
     );

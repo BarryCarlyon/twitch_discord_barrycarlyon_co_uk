@@ -4,7 +4,7 @@ const path = require('path');
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
 require('dotenv').config({
-    path: '../.env'
+    path: path.join(__dirname, '..', '.env')
 });
 
 const mysql = require('mysql');
@@ -17,11 +17,14 @@ const mysql_pool = mysql.createPool({
     "charset":          process.env.DATABASE_CHARSET
 });
 
-const redis = require('redis');
-const redis_client = redis.createClient();
+const { createClient } = require("redis");
+
+const redis_client = createClient();
 redis_client.on('error', (err) => {
     console.error('REDIS Error', err);
 });
+redis_client.connect();
+
 
 var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ redis_client });
 
@@ -36,12 +39,13 @@ process.on('twitch_token', (thing) => {
         console.log('Get and nail', id);
 
         fetch(
-            'https://api.twitch.tv/helix/eventsub/subscriptions'
+            'https://api.twitch.tv/helix/eventsub/subscriptions',
             {
                 headers: {
                     'Client-ID': process.env.TWITCH_CLIENT_ID,
                     'Authorization': 'Bearer ' + twitch.access_token,
                     'Accept': 'application/json'
+                }
             }
         )
         .then(resp => resp.json())

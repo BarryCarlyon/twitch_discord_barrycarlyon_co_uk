@@ -239,9 +239,9 @@ module.exports = function(lib) {
         })
         .catch(err => {
             if (err.response) {
-                console.log('preChannel Error revoke', err.response.status, err.response.body);
+                console.log('preStream Error', err.response.status, err.response.body);
             } else {
-                console.error('preChannel Error revoke', err);
+                console.error('preStream Error', err);
             }
         });
     }
