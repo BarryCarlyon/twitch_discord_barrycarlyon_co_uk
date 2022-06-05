@@ -8,6 +8,7 @@ module.exports = function(lib) {
     twitch.access_token = '';
 
     function validateToken() {
+        console.log('validateToken');
         redis_client.hget(
             'twitch_auth',
             'client_credentials_' + config.twitch.client_id,
@@ -24,33 +25,38 @@ module.exports = function(lib) {
 
                 try {
                     r = JSON.parse(r);
-
-                    // validate
-                    got({
-                        url: 'https://id.twitch.tv/oauth2/validate',
-                        method: 'GET',
-                        headers: {
-                            'Authorization': 'OAuth ' + r.access_token
-                        },
-                        responseType: 'json'
-                    })
-                    .then(resp => {
-                        console.log('validate', resp.body);
-                        if (!resp.body.expires_in) {
-                            createToken();
-                            return;
-                        }
-                        if (resp.body.expires_in < 3600) {
-                            createToken();
-                            return;
-                        }
-
-                        twitch.access_token = r.access_token;
-                        process.emit('twitch_token', '');
-                    });
                 } catch (e) {
                     createToken();
+                    return;
                 }
+
+                // validate
+                got({
+                    url: 'https://id.twitch.tv/oauth2/validate',
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + r.access_token
+                    },
+                    responseType: 'json'
+                })
+                .then(resp => {
+                    console.log('validate', resp.body);
+                    if (!resp.body.expires_in) {
+                        createToken();
+                        return;
+                    }
+                    if (resp.body.expires_in < 3600) {
+                        createToken();
+                        return;
+                    }
+
+                    twitch.access_token = r.access_token;
+                    process.emit('twitch_token', '');
+                })
+                .catch(err => {
+                    // well thats dumb
+                    createToken();
+                });
             }
         );
     }
@@ -79,8 +85,8 @@ module.exports = function(lib) {
                 'client_credentials_' + data.client_id,
                 JSON.stringify(data),
                 (e,r) => {
-                    if (e || !r) {
-                        console.log('Failed to store token', e, r);
+                    if (e) {
+                        console.log('Failed to store token', e);
                     } else {
                         console.log('Token stored', r);
 
@@ -88,8 +94,6 @@ module.exports = function(lib) {
                     }
                 }
             );
-
-            //twitch.access_token = data.access_token;
         })
         .catch(err => {
             if (err.response) {

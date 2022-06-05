@@ -40,6 +40,16 @@ or start the two jobs manually
 - node server.js
 - node utils/runner.js
 
+## Using TwitchCLI to test
+
+You can use the Twitch-cli to test your Eventsub callback see https://github.com/twitchdev/twitch-cli/ and look under Events
+
+Example:
+
+    twitch event verify-subscription stream.online -s "THESECRETISCOOL" -F "https://twitch.discord.barrycarlyon.co.uk/eventsub/"
+
+You would naturally swap the URL to the URL for your instance of the project.
+
 ## License
 
 This project is Licensed under DO WHAT THE FUCK YOU WANT
@@ -52,7 +62,8 @@ Thank you for the help I want to give you beer/coffee money -> Check the Funding
 ## Nginx and Cookie Security
 
 This is an example, so doesn't contain all the _best_ security practices.
-Since this uses cookies to manage logins you should change the session code to something like
+Since this uses cookies to manage logins you should change the session code to something like.
+And the paired `app.user` to sanity check/enforce the right domain for cookies to behave
 
 ```
 app.use(session({
@@ -65,11 +76,16 @@ app.use(session({
     cookie: {
         secure: true,
         httpOnly: true,
-        domain: 'twitch.discord.barrycarlyon.co.uk',
-        expires: new Date(Date.now() + 60 * 60 * 1000)
+        domain: config.server.domain
     },
     rolling: true
 }));
+
+app.use((req, res, next) => {
+    if (req.hostname != config.server.domain) {
+        res.redirect(`https://${config.server.domain}/${req.originalUrl}`);
+        return;
+    }
 ```
 
 Change the domain as needed!

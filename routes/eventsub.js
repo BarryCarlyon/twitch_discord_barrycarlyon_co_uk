@@ -3,6 +3,7 @@ const path = require('path');
 
 const express = require('express');
 const crypto = require('crypto');
+const tsscmp = require('tsscmp');
 
 module.exports = function(lib) {
     let { config, mysql_pool, eventsub, redis_client } = lib;
@@ -14,25 +15,36 @@ module.exports = function(lib) {
             // is there a hub to verify against
             if (req.headers && req.headers.hasOwnProperty('twitch-eventsub-message-signature')) {
                 // id for dedupe
-                let id = req.headers['twitch-eventsub-message-id'];
+                let message_id = req.headers['twitch-eventsub-message-id'];
                 // check age
                 let timestamp = req.headers['twitch-eventsub-message-timestamp'];
-
-                let xHub = req.headers['twitch-eventsub-message-signature'].split('=');
+                // extract algo and signature for comparison
+                let [ signatureAlgo, signatureHash ] = req.headers['twitch-eventsub-message-signature'].split('=');
 
                 // you could do
                 // req.twitch_hex = crypto.createHmac(xHub[0], config.hook_secret)
                 // but we know Twitch always uses sha256
-                let test_signature = crypto.createHmac('sha256', config.twitch.eventsub.secret)
-                    .update(id + timestamp + buf)
+                if (signatureAlgo !== 'sha256') {
+                    console.log('Signature algo not matched');
+                    return false;
+                }
+
+                const ourSignatureHash = crypto.createHmac('sha256', config.twitch.eventsub.secret)
+                    .update(`${message_id}${timestamp}${buf}`)
                     .digest('hex');
-                //req.twitch_signature = xHub[1];
-                req.twitch_signature_valid = (test_signature == xHub[1]);
+
+                if (!signatureHash || !tsscmp(signatureHash, ourSignatureHash)) {
+                    console.log('Signature not matched');
+                    return false;
+                }
+
+                req.twitch_signature_valid = true;
 
                 // as an API style/EventSub handler
                 // force set a/ensure a correct content type header
                 // for all event sub routes
                 res.set('Content-Type', 'text/plain');
+                return true;
             }
         }
     }));

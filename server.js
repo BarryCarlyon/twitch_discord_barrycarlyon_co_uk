@@ -1,8 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const got = require('got');
-
 const express = require('express');
 
 const crypto = require('crypto');
@@ -42,10 +40,6 @@ const redis_client = redis.createClient();
 redis_client.on('error', (err) => {
     console.error('REDIS Error', err);
 });
-//const redis_subscribe = redis.createClient();
-//redis_subscribe.on('error', (err) => {
-//    console.error('REDIS Error', err);
-//});
 
 /*
 Generate a random string at start up
@@ -80,7 +74,7 @@ app.use(session({
     cookie: {
         secure: true,
         httpOnly: true,
-        domain: 'twitch.discord.barrycarlyon.co.uk'
+        domain: config.server.domain
     },
     rolling: true
 }));
@@ -96,7 +90,7 @@ app.use(helmet({
             styleSrc:   ["'self'"],
             scriptSrc:  ["'self'"],
             objectSrc:  ["'self'"],
-            imgSrc: ["'self' https: data:"]
+            imgSrc:     ["'self' https: data:"]
         }
     },
 
@@ -119,6 +113,11 @@ app.use((err, req, res, next) => {
 register some pug globals
 */
 app.use((req, res, next) => {
+    if (req.hostname != config.server.domain) {
+        res.redirect(`https://${config.server.domain}${req.originalUrl}`);
+        return;
+    }
+
     res.locals.twitch_client_id = config.twitch.client_id;
     if (req.session.error) {
         res.locals.error = req.session.error;
@@ -129,11 +128,6 @@ app.use((req, res, next) => {
         res.locals.success = req.session.success;
         delete req.session.success;
     }
-
-//    res.locals.user = false;
-//    if (req.session.user) {
-//        res.locals.user = req.session.user;
-//    }
 
     // temp debug
     res.locals.session = req.session;
