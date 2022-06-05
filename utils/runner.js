@@ -1,17 +1,19 @@
 const fs = require('fs');
 const path = require('path');
 
-const config = JSON.parse(fs.readFileSync(path.join(
-    __dirname,
-    '..',
-    'config.json'
-)));
-
-config.database.connectionLimit = 1;
+require('dotenv').config({
+    path: '../.env'
+});
 
 const mysql = require('mysql');
-const mysql_pool = mysql.createPool(config.database);
-
+const mysql_pool = mysql.createPool({
+    "host":             process.env.DATABASE_HOST,
+    "user":             process.env.DATABASE_USER,
+    "password":         process.env.DATABASE_PASSWORD,
+    "database":         process.env.DATABASE_DATABASE,
+    "connectionLimit":  2,
+    "charset":          process.env.DATABASE_CHARSET
+});
 
 const { createClient } = require("redis");
 
@@ -21,9 +23,9 @@ redis_client.on('error', (err) => {
 });
 redis_client.connect();
 
-var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ config, mysql_pool, redis_client });
-var eventsub = require(path.join(__dirname, '..', 'modules', 'eventsub'))({ config, mysql_pool, twitch });
-var discord = require(path.join(__dirname, '..', 'modules', 'discord'))({ config, mysql_pool, twitch });
+var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ mysql_pool, redis_client });
+var eventsub = require(path.join(__dirname, '..', 'modules', 'eventsub'))({ mysql_pool, twitch });
+var discord = require(path.join(__dirname, '..', 'modules', 'discord'))({ mysql_pool, twitch });
 
 
 const subscriber = redis_client.duplicate();

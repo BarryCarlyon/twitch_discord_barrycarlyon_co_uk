@@ -2,7 +2,7 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const crypto = require('crypto');
 
 module.exports = function(lib) {
-    let { config, mysql_pool, twitch } = lib;
+    let { mysql_pool, twitch } = lib;
 
     let eventsub = {};
 
@@ -46,7 +46,7 @@ module.exports = function(lib) {
             {
                 method: 'POST',
                 headers: {
-                    'Client-ID': config.twitch.client_id,
+                    'Client-ID': process.env.TWITCH_CLIENT_ID,
                     'Authorization': 'Bearer ' + twitch.access_token,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
@@ -57,8 +57,8 @@ module.exports = function(lib) {
                     condition: { broadcaster_user_id },
                     transport: {
                         method: 'webhook',
-                        callback: config.twitch.eventsub.callback,
-                        secret: config.twitch.eventsub.secret
+                        callback: process.env.TWITCH_EVENTSUB_CALLBACK,
+                        secret: process.env.TWITCH_EVENTSUB_SECRET
                     }
                 })
             }
@@ -106,7 +106,7 @@ module.exports = function(lib) {
             {
                 method: 'DELETE',
                 headers: {
-                    'Client-ID': config.twitch.client_id,
+                    'Client-ID': process.env.TWITCH_CLIENT_ID,
                     'Authorization': 'Bearer ' + twitch.access_token
                 }
             }
@@ -142,7 +142,7 @@ module.exports = function(lib) {
             {
                 method: 'GET',
                 headers: {
-                    'Client-ID': config.twitch.client_id,
+                    'Client-ID': process.env.TWITCH_CLIENT_ID,
                     'Authorization': 'Bearer ' + twitch.access_token,
                     'Accept': 'application/json'
                 }
@@ -160,7 +160,7 @@ module.exports = function(lib) {
                 {
                     method: 'GET',
                     headers: {
-                        'Client-ID': config.twitch.client_id,
+                        'Client-ID': process.env.TWITCH_CLIENT_ID,
                         'Authorization': 'Bearer ' + twitch.access_token,
                         'Accept': 'application/json'
                     }
@@ -209,7 +209,7 @@ module.exports = function(lib) {
             {
                 method: 'GET',
                 headers: {
-                    'Client-ID': config.twitch.client_id,
+                    'Client-ID': process.env.TWITCH_CLIENT_ID,
                     'Authorization': 'Bearer ' + twitch.access_token,
                     'Accept': 'application/json'
                 }
@@ -255,7 +255,7 @@ module.exports = function(lib) {
             {
                 method: 'POST',
                 headers: {
-                    'Client-ID': config.twitch.client_id,
+                    'Client-ID': process.env.TWITCH_CLIENT_ID,
                     'Authorization': 'Bearer ' + twitch.access_token,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
@@ -264,12 +264,12 @@ module.exports = function(lib) {
                     type: 'user.authorization.revoke',
                     version: 1,
                     condition: {
-                        client_id: config.twitch.client_id
+                        client_id: process.env.TWITCH_CLIENT_ID
                     },
                     transport: {
                         method: 'webhook',
-                        callback: config.twitch.eventsub.callback,
-                        secret: config.twitch.eventsub.secret
+                        callback: process.env.TWITCH_EVENTSUB_CALLBACK,
+                        secret: process.env.TWITCH_EVENTSUB_SECRET
                     }
                 })
             }
@@ -292,7 +292,7 @@ module.exports = function(lib) {
             {
                 method: 'DELETE',
                 headers: {
-                    'Client-ID': config.twitch.client_id,
+                    'Client-ID': process.env.TWITCH_CLIENT_ID,
                     'Authorization': 'Bearer ' + twitch.access_token
                 }
             }
@@ -315,7 +315,7 @@ module.exports = function(lib) {
             {
                 method: 'GET',
                 headers: {
-                    'Client-ID': config.twitch.client_id,
+                    'Client-ID': process.env.TWITCH_CLIENT_ID,
                     'Authorization': 'Bearer ' + twitch.access_token,
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
@@ -332,7 +332,7 @@ module.exports = function(lib) {
 
             var found = false;
             for (var x=0;x<resp.data.length;x++) {
-                if (resp.data[x].transport.callback == config.twitch.eventsub.callback) {
+                if (resp.data[x].transport.callback == process.env.TWITCH_EVENTSUB_CALLBACK) {
                     // this this instance
                     if (resp.data[x].status == 'enabled') {
                         found = true;

@@ -3,7 +3,7 @@ const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch
 const crypto = require('crypto');
 
 module.exports = function(lib) {
-    let { config, mysql_pool } = lib;
+    let { mysql_pool } = lib;
 
     const router = express.Router();
 
@@ -31,11 +31,11 @@ module.exports = function(lib) {
             // oauth exchange
 
             let oauth_params = [
-                [ "client_id",      config.twitch.client_id ],
-                [ "client_secret",  config.twitch.client_secret ],
+                [ "client_id",      process.env.TWITCH_CLIENT_ID ],
+                [ "client_secret",  process.env.TWITCH_CLIENT_SECRET ],
                 [ "code",           code ],
                 [ "grant_type",     "authorization_code" ],
-                [ "redirect_uri",    config.twitch.redirect_uri ],
+                [ "redirect_uri",    process.env.TWITCH_REDIRECT_URI ],
             ]
             const params = new URLSearchParams(oauth_params);
 
@@ -60,7 +60,7 @@ module.exports = function(lib) {
                         "method": "GET",
                         "headers": {
                             "Accept": "application/json",
-                            "Client-ID": config.twitch.client_id,
+                            "Client-ID": process.env.TWITCH_CLIENT_ID,
                             "Authorization": 'Bearer ' + req.session.user.twitch_access.access_token
                         }
                     }
@@ -104,8 +104,8 @@ module.exports = function(lib) {
 
             res.redirect(''
                 + 'https://id.twitch.tv/oauth2/authorize'
-                + '?client_id=' + config.twitch.client_id
-                + '&redirect_uri=' + encodeURIComponent(config.twitch.redirect_uri)
+                + '?client_id=' + process.env.TWITCH_CLIENT_ID
+                + '&redirect_uri=' + encodeURIComponent(process.env.TWITCH_REDIRECT_URI)
                 + '&response_type=code'
                 + '&state=' + encodeURIComponent(req.session.state)
             );
@@ -138,11 +138,11 @@ module.exports = function(lib) {
             delete req.session.state;
 
             let oauth_params = [
-                [ "client_id",      config.discord.client_id ],
-                [ "client_secret",  config.discord.client_secret ],
+                [ "client_id",      process.env.DISCORD_CLIENT_ID ],
+                [ "client_secret",  process.env.DISCORD_CLIENT_SECRET ],
                 [ "code",           code ],
                 [ "grant_type",     "authorization_code" ],
-                [ "redirect_uri",    config.discord.redirect_uri ],
+                [ "redirect_uri",    process.env.DISCORD_REDIRECT_URI ],
             ]
             const params = new URLSearchParams(oauth_params);
 
@@ -255,8 +255,8 @@ module.exports = function(lib) {
 
             res.redirect(''
                 + 'https://discord.com/api/oauth2/authorize'
-                + '?client_id=' + config.discord.client_id
-                + '&redirect_uri=' + encodeURIComponent(config.discord.redirect_uri)
+                + '?client_id=' + process.env.DISCORD_CLIENT_ID
+                + '&redirect_uri=' + encodeURIComponent(process.env.DISCORD_REDIRECT_URI)
                 + '&response_type=code'
                 + '&scope=identify+webhook.incoming'
                 + '&state=' + encodeURIComponent(req.session.state)

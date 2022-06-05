@@ -1,7 +1,7 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
 module.exports = function(lib) {
-    let { config, redis_client } = lib;
+    let { redis_client } = lib;
 
     let twitch = {};
 
@@ -13,7 +13,7 @@ module.exports = function(lib) {
 
         redis_client.HGET(
             'twitch_auth',
-            'client_credentials_' + config.twitch.client_id
+            'client_credentials_' + process.env.TWITCH_CLIENT_ID
         )
         .then(loaded_token => {
             // no token create one
@@ -68,8 +68,8 @@ module.exports = function(lib) {
     function createToken() {
         let url = new URL('https://id.twitch.tv/oauth2/token');
         let params = [
-            [ 'client_id', config.twitch.client_id ],
-            [ 'client_secret', config.twitch.client_secret ],
+            [ 'client_id', process.env.TWITCH_CLIENT_ID ],
+            [ 'client_secret', process.env.TWITCH_CLIENT_SECRET ],
             [ 'grant_type', 'client_credentials' ],
         ]
         url.search = new URLSearchParams(params).toString();
@@ -85,7 +85,7 @@ module.exports = function(lib) {
         )
         .then(resp => resp.json())
         .then(resp => {
-            resp.client_id = config.twitch.client_id;
+            resp.client_id = process.env.TWITCH_CLIENT_ID;
 
             return redis_client.HSET(
                 'twitch_auth',

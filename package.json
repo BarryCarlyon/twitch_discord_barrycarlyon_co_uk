@@ -19,6 +19,7 @@
   "homepage": "https://github.com/BarryCarlyon/twitch_discord_barrycarlyon_co_uk#readme",
   "dependencies": {
     "connect-redis": "^6.1.3",
+    "dotenv": "^16.0.1",
     "express": "^4.18.1",
     "express-session": "^1.17.3",
     "helmet": "^5.1.0",

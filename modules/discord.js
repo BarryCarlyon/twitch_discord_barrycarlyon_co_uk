@@ -1,7 +1,7 @@
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
 module.exports = function(lib) {
-    let { config, mysql_pool } = lib;
+    let { mysql_pool } = lib;
 
     let discord = {};
 

@@ -3,16 +3,19 @@ const path = require('path');
 
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
-const config = JSON.parse(fs.readFileSync(path.join(
-    __dirname,
-    '..',
-    'config.json'
-)));
-
-config.database.connectionLimit = 1;
+require('dotenv').config({
+    path: '../.env'
+});
 
 const mysql = require('mysql');
-const mysql_pool = mysql.createPool(config.database);
+const mysql_pool = mysql.createPool({
+    "host":             process.env.DATABASE_HOST,
+    "user":             process.env.DATABASE_USER,
+    "password":         process.env.DATABASE_PASSWORD,
+    "database":         process.env.DATABASE_DATABASE,
+    "connectionLimit":  2,
+    "charset":          process.env.DATABASE_CHARSET
+});
 
 const redis = require('redis');
 const redis_client = redis.createClient();
@@ -20,7 +23,7 @@ redis_client.on('error', (err) => {
     console.error('REDIS Error', err);
 });
 
-var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ config, redis_client });
+var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ redis_client });
 
 const readline = require("readline");
 const rl = readline.createInterface({
@@ -36,7 +39,7 @@ process.on('twitch_token', (thing) => {
             'https://api.twitch.tv/helix/eventsub/subscriptions'
             {
                 headers: {
-                    'Client-ID': config.twitch.client_id,
+                    'Client-ID': process.env.TWITCH_CLIENT_ID,
                     'Authorization': 'Bearer ' + twitch.access_token,
                     'Accept': 'application/json'
             }
@@ -69,7 +72,7 @@ function deleteHook(id) {
         'https://api.twitch.tv/helix/eventsub/subscriptions?id=' + id,
         {
             headers: {
-                'Client-ID': config.twitch.client_id,
+                'Client-ID': process.env.TWITCH_CLIENT_ID,
                 'Authorization': 'Bearer ' + twitch.access_token
             },
             method: 'DELETE'
