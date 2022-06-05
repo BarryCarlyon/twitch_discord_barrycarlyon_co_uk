@@ -335,13 +335,13 @@ module.exports = function(lib) {
                         found = true;
                     } else {
                         console.log('Sub is invalid, delete and create');
-                        eventsub.deleteRevoke(resp.bdoy.data[0].id);
+                        eventsub.deleteRevoke(resp.body.data[0].id);
                         return;
                     }
                 }
             }
             if (found) {
-                console.log('Revoke is good!');
+                //console.log('Revoke is good!');
             } else {
                 eventsub.createRevoke();
             }
