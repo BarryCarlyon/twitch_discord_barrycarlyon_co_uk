@@ -1,5 +1,4 @@
 const express = require('express');
-const got = require('got');
 
 module.exports = function(lib) {
     let { config, mysql_pool, eventsub, discord } = lib;
@@ -159,7 +158,7 @@ module.exports = function(lib) {
             req.session.error = 'Failed to create test Notification';
         })
         .finally(() => {
-            console.log('finally');
+            //console.log('finally');
             res.redirect('/admin/');
         });
     });

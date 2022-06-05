@@ -1,4 +1,4 @@
-const got = require('got');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 const crypto = require('crypto');
 
 module.exports = function(lib) {
@@ -41,29 +41,31 @@ module.exports = function(lib) {
     }
 
     eventsub.subscribe = (type, broadcaster_user_id) => {
-        got({
-            url: 'https://api.twitch.tv/helix/eventsub/subscriptions',
-            method: 'POST',
-            headers: {
-                'Client-ID': config.twitch.client_id,
-                'Authorization': 'Bearer ' + twitch.access_token,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            json: {
-                type,
-                version: 1,
-                condition: { broadcaster_user_id },
-                transport: {
-                    method: 'webhook',
-                    callback: config.twitch.eventsub.callback,
-                    secret: config.twitch.eventsub.secret
-                }
-            },
-            responseType: 'json'
-        })
+        fetch(
+            'https://api.twitch.tv/helix/eventsub/subscriptions',
+            {
+                method: 'POST',
+                headers: {
+                    'Client-ID': config.twitch.client_id,
+                    'Authorization': 'Bearer ' + twitch.access_token,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    type,
+                    version: 1,
+                    condition: { broadcaster_user_id },
+                    transport: {
+                        method: 'webhook',
+                        callback: config.twitch.eventsub.callback,
+                        secret: config.twitch.eventsub.secret
+                    }
+                })
+            }
+        )
+        .then(resp => resp.json())
         .then(resp => {
-            console.log('eventsub', type, broadcaster_user_id, resp.statusCode, resp.body);
+            console.log('eventsub', type, broadcaster_user_id, resp.statusCode, resp);
 
             // DB it
             mysql_pool.query(''
@@ -72,8 +74,8 @@ module.exports = function(lib) {
                 [
                     broadcaster_user_id,
                     type,
-                    resp.body.data[0].id,
-                    resp.body.data[0].id
+                    resp.data[0].id,
+                    resp.data[0].id
                 ],
                 (e,r) => {
                     if (e) {
@@ -99,14 +101,16 @@ module.exports = function(lib) {
     }
     eventsub.unsubscribe = (id) => {
         // delete
-        got({
-            url: 'https://api.twitch.tv/helix/eventsub/subscriptions?id=' + id,
-            method: 'DELETE',
-            headers: {
-                'Client-ID': config.twitch.client_id,
-                'Authorization': 'Bearer ' + twitch.access_token
+        fetch(
+            'https://api.twitch.tv/helix/eventsub/subscriptions?id=' + id,
+            {
+                method: 'DELETE',
+                headers: {
+                    'Client-ID': config.twitch.client_id,
+                    'Authorization': 'Bearer ' + twitch.access_token
+                }
             }
-        })
+        )
         .then(resp => {
             console.log('Nailed with', resp.statusCode);
         })
@@ -133,41 +137,39 @@ module.exports = function(lib) {
 
     eventsub.preChannel = (broadcaster_id) => {
         var user = {};
-        got({
-            url: 'https://api.twitch.tv/helix/users',
-            method: 'GET',
-            headers: {
-                'Client-ID': config.twitch.client_id,
-                'Authorization': 'Bearer ' + twitch.access_token,
-                'Accept': 'application/json'
-            },
-            searchParams: {
-                id: broadcaster_id
-            },
-            responseType: 'json'
-        })
-        .then(resp => {
-            if (resp.body.data && resp.body.data.length == 1) {
-                console.log('preChannel got user');
-                user = resp.body.data[0];
-            }
-
-            return got({
-                url: 'https://api.twitch.tv/helix/channels',
+        fetch(
+            'https://api.twitch.tv/helix/users?id=' + broadcaster_id,
+            {
                 method: 'GET',
                 headers: {
                     'Client-ID': config.twitch.client_id,
                     'Authorization': 'Bearer ' + twitch.access_token,
                     'Accept': 'application/json'
-                },
-                searchParams: {
-                    broadcaster_id
-                },
-                responseType: 'json'
-            })
-        })
+                }
+            }
+        )
+        .then(resp => resp.json())
         .then(resp => {
-            if (resp.body.data && resp.body.data.length == 1) {
+            if (resp.data && resp.data.length == 1) {
+                console.log('preChannel got user');
+                user = resp.data[0];
+            }
+
+            return fetch(
+                'https://api.twitch.tv/helix/channels?broadcaster_id=' + broadcaster_id,
+                {
+                    method: 'GET',
+                    headers: {
+                        'Client-ID': config.twitch.client_id,
+                        'Authorization': 'Bearer ' + twitch.access_token,
+                        'Accept': 'application/json'
+                    }
+                }
+            );
+        })
+        .then(resp => resp.json())
+        .then(resp => {
+            if (resp.data && resp.data.length == 1) {
                 console.log('preChannel got channel');
                 mysql_pool.query(''
                     + 'INSERT INTO channels (twitch_user_id, twitch_login, twitch_display_name, channel_title, channel_game) VALUES (?,?,?,?,?) '
@@ -177,13 +179,13 @@ module.exports = function(lib) {
 
                         user.login,
                         user.display_name,
-                        resp.body.data[0].title,
-                        resp.body.data[0].game_name,
+                        resp.data[0].title,
+                        resp.data[0].game_name,
 
                         user.login,
                         user.display_name,
-                        resp.body.data[0].title,
-                        resp.body.data[0].game_name
+                        resp.data[0].title,
+                        resp.data[0].game_name
                     ],
                     (e,r) => {
                         if (e) {
@@ -195,26 +197,25 @@ module.exports = function(lib) {
         })
         .catch(err => {
             if (err.response) {
-                console.log('preChannel Error revoke', err.response.statusCode, err.response.body);
+                console.log('preChannel Error', err.response.statusCode, err.response.body);
             } else {
-                console.error('preChannel Error revoke', err);
+                console.error('preChannel Error', err);
             }
         });
     }
     eventsub.preStream = (user_id) => {
-        got({
-            url: 'https://api.twitch.tv/helix/streams',
-            method: 'GET',
-            headers: {
-                'Client-ID': config.twitch.client_id,
-                'Authorization': 'Bearer ' + twitch.access_token,
-                'Accept': 'application/json'
-            },
-            searchParams: {
-                user_id
-            },
-            responseType: 'json'
-        })
+        fetch(
+            'https://api.twitch.tv/helix/streams?user_id=' + user_id,
+            {
+                method: 'GET',
+                headers: {
+                    'Client-ID': config.twitch.client_id,
+                    'Authorization': 'Bearer ' + twitch.access_token,
+                    'Accept': 'application/json'
+                }
+            }
+        )
+        .then(resp => resp.json())
         .then(resp => {
             var live = 0;
             if (resp.body.data && resp.body.data.length == 1) {
@@ -249,31 +250,32 @@ module.exports = function(lib) {
     }
 
     eventsub.createRevoke = () => {
-        return got({
-            url: 'https://api.twitch.tv/helix/eventsub/subscriptions',
-            method: 'POST',
-            headers: {
-                'Client-ID': config.twitch.client_id,
-                'Authorization': 'Bearer ' + twitch.access_token,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            json: {
-                type: 'user.authorization.revoke',
-                version: 1,
-                condition: {
-                    client_id: config.twitch.client_id
+        return fetch(
+            'https://api.twitch.tv/helix/eventsub/subscriptions',
+            {
+                method: 'POST',
+                headers: {
+                    'Client-ID': config.twitch.client_id,
+                    'Authorization': 'Bearer ' + twitch.access_token,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
-                transport: {
-                    method: 'webhook',
-                    callback: config.twitch.eventsub.callback,
-                    secret: config.twitch.eventsub.secret
-                }
-            },
-            responseType: 'json'
-        })
+                body: JSON.stringify({
+                    type: 'user.authorization.revoke',
+                    version: 1,
+                    condition: {
+                        client_id: config.twitch.client_id
+                    },
+                    transport: {
+                        method: 'webhook',
+                        callback: config.twitch.eventsub.callback,
+                        secret: config.twitch.eventsub.secret
+                    }
+                })
+            }
+        )
         .then(resp => {
-            console.log('eventsub revoke', resp.statusCode, resp.body);
+            console.log('eventsub revoke', resp.statusCode);
         })
         .catch(err => {
             if (err.response) {
@@ -285,14 +287,16 @@ module.exports = function(lib) {
     }
     eventsub.deleteRevoke = (id) => {
         // delete
-        got({
-            url: 'https://api.twitch.tv/helix/eventsub/subscriptions?id=' + id,
-            method: 'DELETE',
-            headers: {
-                'Client-ID': config.twitch.client_id,
-                'Authorization': 'Bearer ' + twitch.access_token
+        fetch(
+            'https://api.twitch.tv/helix/eventsub/subscriptions?id=' + id,
+            {
+                method: 'DELETE',
+                headers: {
+                    'Client-ID': config.twitch.client_id,
+                    'Authorization': 'Bearer ' + twitch.access_token
+                }
             }
-        })
+        )
         .then(resp => {
             console.log('Nailed with', resp.statusCode);
         })
@@ -306,36 +310,35 @@ module.exports = function(lib) {
     }
 
     eventsub.init = () => {
-        got({
-            url: 'https://api.twitch.tv/helix/eventsub/subscriptions',
-            method: 'GET',
-            headers: {
-                'Client-ID': config.twitch.client_id,
-                'Authorization': 'Bearer ' + twitch.access_token,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            searchParams: {
-                type: 'user.authorization.revoke'
-            },
-            responseType: 'json'
-        })
+        fetch(
+            'https://api.twitch.tv/helix/eventsub/subscriptions?type=user.authorization.revoke',
+            {
+                method: 'GET',
+                headers: {
+                    'Client-ID': config.twitch.client_id,
+                    'Authorization': 'Bearer ' + twitch.access_token,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            }
+        )
+        .then(resp => resp.json())
         .then(resp => {
-            if (resp.body.data.length == 0) {
+            if (resp.data.length == 0) {
                 console.log('Sub no exist, create');
                 eventsub.createRevoke();
                 return;
             }
 
             var found = false;
-            for (var x=0;x<resp.body.data.length;x++) {
-                if (resp.body.data[x].transport.callback == config.twitch.eventsub.callback) {
+            for (var x=0;x<resp.data.length;x++) {
+                if (resp.data[x].transport.callback == config.twitch.eventsub.callback) {
                     // this this instance
-                    if (resp.body.data[x].status == 'enabled') {
+                    if (resp.data[x].status == 'enabled') {
                         found = true;
                     } else {
                         console.log('Sub is invalid, delete and create');
-                        eventsub.deleteRevoke(resp.body.data[0].id);
+                        eventsub.deleteRevoke(resp.data[0].id);
                         return;
                     }
                 }

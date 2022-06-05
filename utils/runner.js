@@ -1,8 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 
-const got = require('got');
-
 const config = JSON.parse(fs.readFileSync(path.join(
     __dirname,
     '..',

@@ -1,4 +1,4 @@
-const got = require('got');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
 module.exports = function(lib) {
     let { config, redis_client } = lib;
@@ -26,22 +26,25 @@ module.exports = function(lib) {
             token = JSON.parse(loaded_token);
 
             // got a token validate it
-            return got({
-                url: 'https://id.twitch.tv/oauth2/validate',
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + token.access_token
-                },
-                responseType: 'json'
-            })
+            return fetch(
+                'https://id.twitch.tv/oauth2/validate',
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token.access_token,
+                        'Accept': 'application/json'
+                    },
+                }
+            )
         })
+        .then(resp => resp.json())
         .then(resp => {
-            console.log('validate', resp.body);
-            if (!resp.body.expires_in) {
+            console.log('validate resp', resp);
+            if (!resp.expires_in) {
                 createToken();
                 return;
             }
-            if (resp.body.expires_in < 3600) {
+            if (resp.expires_in < 3600) {
                 createToken();
                 return;
             }
@@ -63,24 +66,31 @@ module.exports = function(lib) {
     }, (30 * 60 * 1000));
 
     function createToken() {
-        got({
-            url: 'https://id.twitch.tv/oauth2/token',
-            method: 'POST',
-            searchParams: {
-                client_id: config.twitch.client_id,
-                client_secret: config.twitch.client_secret,
-                grant_type: 'client_credentials'
-            },
-            responseType: 'json'
-        })
+        let url = new URL('https://id.twitch.tv/oauth2/token');
+        let params = [
+            [ 'client_id', config.twitch.client_id ],
+            [ 'client_secret', config.twitch.client_secret ],
+            [ 'grant_type', 'client_credentials' ],
+        ]
+        url.search = new URLSearchParams(params).toString();
+
+        fetch(
+            url,
+            {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }
+        )
+        .then(resp => resp.json())
         .then(resp => {
-            var data = resp.body;
-            data.client_id = config.twitch.client_id;
+            resp.client_id = config.twitch.client_id;
 
             return redis_client.HSET(
                 'twitch_auth',
-                'client_credentials_' + data.client_id,
-                JSON.stringify(data)
+                'client_credentials_' + resp.client_id,
+                JSON.stringify(resp)
             );
         })
         .then(r => {

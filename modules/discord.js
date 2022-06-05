@@ -1,4 +1,4 @@
-const got = require('got');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
 module.exports = function(lib) {
     let { config, mysql_pool } = lib;
@@ -21,19 +21,22 @@ module.exports = function(lib) {
 
                     var notification_id = r.insertId;
 
-                    got({
-                        url,
-                        method: 'POST',
-                        searchParams: {
-                            wait: true
-                        },
-                        json: payload,
-                        responseType: 'json'
-                    })
+                    fetch(
+                        url + '?wait=true',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload),
+                        }
+                    )
+                    .then(resp => resp.json())
                     .then(resp => {
                         console.log('Discord OK', url);
 
-                        var discord_message_id = resp.body.id;
+                        var discord_message_id = resp.id;
                         var discord_message_url = 'https://discord.com/channels/'
                             + data.discord_guild_id + '/'
                             + data.discord_channel_id + '/'
@@ -61,10 +64,12 @@ module.exports = function(lib) {
                                     if (del) {
                                         setTimeout(() => {
                                             // delete it
-                                            got({
-                                                url: url + '/messages/' + discord_message_id,
-                                                method: 'DELETE'
-                                            })
+                                            fetch(
+                                                url + '/messages/' + discord_message_id,
+                                                {
+                                                    method: 'DELETE'
+                                                }
+                                            )
                                             .then(resp => {
                                                 console.log('Deleted OK', resp.statusCode);
 
@@ -104,11 +109,12 @@ module.exports = function(lib) {
                         );
                     })
                     .catch(err => {
+                        console.error(err);
                         var words = '';
                         if (err.response) {
                             console.error('Discord Error', err.response.statusCode, err.response.body);
                             // the oAuth dance failed
-                            words = err.response.body.message;
+                            words = err.responsemessage;
 
                             if (err.response.body.code == 10015) {
                                 // dead Discord webhook
