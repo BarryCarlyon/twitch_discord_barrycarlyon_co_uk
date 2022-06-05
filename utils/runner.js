@@ -9,69 +9,79 @@ const config = JSON.parse(fs.readFileSync(path.join(
     'config.json'
 )));
 
-//config.database.connectionLimit = 1;
+config.database.connectionLimit = 1;
 
 const mysql = require('mysql');
 const mysql_pool = mysql.createPool(config.database);
 
-const redis = require('redis');
-const redis_client = redis.createClient();
+
+const { createClient } = require("redis");
+
+const redis_client = createClient();
 redis_client.on('error', (err) => {
     console.error('REDIS Error', err);
 });
-const redis_subscriber = redis.createClient();
-redis_subscriber.on('error', (err) => {
-    console.error('REDIS Error', err);
-});
+redis_client.connect();
 
 var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ config, mysql_pool, redis_client });
 var eventsub = require(path.join(__dirname, '..', 'modules', 'eventsub'))({ config, mysql_pool, twitch });
 var discord = require(path.join(__dirname, '..', 'modules', 'discord'))({ config, mysql_pool, twitch });
 
-redis_subscriber.on('message', (chan, message) => {
-    switch (chan) {
-        case 'twitch_discord:user.authorization.revoke':
-            try {
-                message = JSON.parse(message);
-                processUserDie(message.event.user_id);
-            } catch (e) {
-                console.log(e)
-            }
-            break;
-        case 'twitch_discord:stream.offline':
-            try {
-                message = JSON.parse(message);
-                processStreamEnd(message.event.broadcaster_user_id);
-            } catch (e) {
-                console.log(e)
-            }
-            break;
-        case 'twitch_discord:stream.online':
-            try {
-                message = JSON.parse(message);
-                processStreamUp(message.event.broadcaster_user_id);
-            } catch (e) {
-                console.log(e)
-            }
-            break;
-        case 'twitch_discord:channel.update':
-            try {
-                message = JSON.parse(message);
-                processChannelUpdate(message.event.broadcaster_user_id, message.event);
-            } catch (e) {
-                console.log(e)
-            }
-            break;
-    }
 
+const subscriber = redis_client.duplicate();
+subscriber
+    .connect()
+    .then(async () => {
+
+        await subscriber.subscribe(
+            'twitch_discord:user.authorization.revoke',
+            (message) => {
+                try {
+                    message = JSON.parse(message);
+                    processUserDie(message.event.user_id);
+                } catch (e) {
+                    console.log(e)
+                }
+            }
+        );
+
+        await subscriber.subscribe(
+            'twitch_discord:stream.offline',
+            (message) => {
+                try {
+                    message = JSON.parse(message);
+                    processStreamEnd(message.event.broadcaster_user_id);
+                } catch (e) {
+                    console.log(e)
+                }
+            }
+        );
+
+        await subscriber.subscribe(
+            'twitch_discord:stream.online',
+            (message) => {
+                try {
+                    message = JSON.parse(message);
+                    processStreamUp(message.event.broadcaster_user_id);
+                } catch (e) {
+                    console.log(e)
+                }
+            }
+        );
+
+        await subscriber.subscribe(
+            'twitch_discord:channel.update',
+            (message) => {
+                try {
+                    message = JSON.parse(message);
+                    processChannelUpdate(message.event.broadcaster_user_id, message.event);
+                } catch (e) {
+                    console.log(e)
+                }
+            }
+        );
+    });
     // @Todo: if cost 1 kill subs for user
-});
-redis_subscriber.subscribe('twitch_discord:user.authorization.revoke');
-redis_subscriber.subscribe('twitch_discord:stream.offline');
-redis_subscriber.subscribe('twitch_discord:stream.online');
-redis_subscriber.subscribe('twitch_discord:channel.update');
-
-
 
 
 function processUserDie(user_id) {
