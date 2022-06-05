@@ -65,7 +65,7 @@ module.exports = function(lib) {
         )
         .then(resp => resp.json())
         .then(resp => {
-            console.log('eventsub', type, broadcaster_user_id, resp.statusCode, resp);
+            console.log('eventsub', type, broadcaster_user_id, resp.status, resp);
 
             // DB it
             mysql_pool.query(''
@@ -93,7 +93,7 @@ module.exports = function(lib) {
         })
         .catch(err => {
             if (err.response) {
-                console.log('EventSub Error', type, broadcaster_user_id, err.response.statusCode, err.response.body);
+                console.log('EventSub Error', type, broadcaster_user_id, err.response.status, err.response.body);
             } else {
                 console.error('EventSub Error', type, broadcaster_user_id, err);
             }
@@ -112,10 +112,10 @@ module.exports = function(lib) {
             }
         )
         .then(resp => {
-            console.log('Nailed with', resp.statusCode);
+            console.log('Nailed with', resp.status);
         })
         .catch(err => {
-            console.error('Failed with', err.response.statusCode);
+            console.error('Failed with', err.response.status);
         })
         .finally(() => {
             console.log('Delete cache', id);
@@ -197,7 +197,7 @@ module.exports = function(lib) {
         })
         .catch(err => {
             if (err.response) {
-                console.log('preChannel Error', err.response.statusCode, err.response.body);
+                console.log('preChannel Error', err.response.status, err.response.body);
             } else {
                 console.error('preChannel Error', err);
             }
@@ -239,7 +239,7 @@ module.exports = function(lib) {
         })
         .catch(err => {
             if (err.response) {
-                console.log('preChannel Error revoke', err.response.statusCode, err.response.body);
+                console.log('preChannel Error revoke', err.response.status, err.response.body);
             } else {
                 console.error('preChannel Error revoke', err);
             }
@@ -275,11 +275,11 @@ module.exports = function(lib) {
             }
         )
         .then(resp => {
-            console.log('eventsub revoke', resp.statusCode);
+            console.log('eventsub revoke', resp.status);
         })
         .catch(err => {
             if (err.response) {
-                console.log('EventSub Error revoke', err.response.statusCode, err.response.body);
+                console.log('EventSub Error revoke', err.response.status, err.response.body);
             } else {
                 console.error('EventSub Error revoke', err);
             }
@@ -298,10 +298,10 @@ module.exports = function(lib) {
             }
         )
         .then(resp => {
-            console.log('Nailed with', resp.statusCode);
+            console.log('Nailed with', resp.status);
         })
         .catch(err => {
-            console.error('Failed with', err.response.statusCode);
+            console.error('Failed with', err.response.status);
         })
         .finally(() => {
             // remake
@@ -350,7 +350,7 @@ module.exports = function(lib) {
         })
         .catch(err => {
             if (err.response) {
-                console.log('EventSub Init Error', err.response.statusCode, err.response.body);
+                console.log('EventSub Init Error', err.response.status, err.response.body);
             } else {
                 console.error('EventSub Init Error', err);
             }

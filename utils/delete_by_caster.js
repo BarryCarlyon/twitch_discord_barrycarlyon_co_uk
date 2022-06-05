@@ -79,10 +79,10 @@ function deleteHook(id) {
         }
     )
     .then(resp => {
-        console.log('Nailed with', resp.statusCode);
+        console.log('Nailed with', resp.status);
     })
     .catch(err => {
-        console.error('Failed with', err.response.statusCode);
+        console.error('Failed with', err.response.status);
     })
     .finally(() => {
         wackings++;

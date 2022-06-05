@@ -99,7 +99,7 @@ module.exports = function(lib) {
         })
         .catch(err => {
             if (err.response) {
-                console.error('Token Generate error', err.response.statusCode, err.response.body);
+                console.error('Token Generate error', err.response.status, err.response.body);
             } else {
                 console.error('Token Generate error', err);
             }

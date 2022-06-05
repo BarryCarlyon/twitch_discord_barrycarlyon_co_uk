@@ -71,7 +71,7 @@ module.exports = function(lib) {
                                                 }
                                             )
                                             .then(resp => {
-                                                console.log('Deleted OK', resp.statusCode);
+                                                console.log('Deleted OK', resp.status);
 
                                                 mysql_pool.query(
                                                     'UPDATE notification_log SET status = ? WHERE id = ?',
@@ -91,7 +91,7 @@ module.exports = function(lib) {
                                             })
                                             .catch(err => {
                                                 if (err.response) {
-                                                    console.log('Delete Failed', err.response.statusCode);
+                                                    console.log('Delete Failed', err.response.status);
                                                 } else {
                                                     console.log('Delete Failed', err);
                                                 }
@@ -112,7 +112,7 @@ module.exports = function(lib) {
                         console.error(err);
                         var words = '';
                         if (err.response) {
-                            console.error('Discord Error', err.response.statusCode, err.response.body);
+                            console.error('Discord Error', err.response.status, err.response.body);
                             // the oAuth dance failed
                             words = err.responsemessage;
 

@@ -235,7 +235,7 @@ module.exports = function(lib) {
                     req.session.error = 'Discord Error: ' + err.message,
                     req.session.error_discord = err.code;
                 } else if (err.response) {
-                    console.error('Discord Error', err.response.statusCode, err.response.body);
+                    console.error('Discord Error', err.response.status, err.response.body);
                     // the oAuth dance failed
                     req.session.error = 'An Error occured: ' + ((err.response && err.response.body.message) ? err.response.body.message : 'Unknown');
                     req.session.error_discord = err.response.body.code;
