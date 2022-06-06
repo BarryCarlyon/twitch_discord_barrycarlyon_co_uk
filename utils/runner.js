@@ -1,19 +1,19 @@
 const fs = require('fs');
 const path = require('path');
 
-const got = require('got');
-
-const config = JSON.parse(fs.readFileSync(path.join(
-    __dirname,
-    '..',
-    'config.json'
-)));
-
-config.database.connectionLimit = 1;
+require('dotenv').config({
+    path: path.join(__dirname, '..', '.env')
+});
 
 const mysql = require('mysql');
-const mysql_pool = mysql.createPool(config.database);
-
+const mysql_pool = mysql.createPool({
+    "host":             process.env.DATABASE_HOST,
+    "user":             process.env.DATABASE_USER,
+    "password":         process.env.DATABASE_PASSWORD,
+    "database":         process.env.DATABASE_DATABASE,
+    "connectionLimit":  2,
+    "charset":          process.env.DATABASE_CHARSET
+});
 
 const { createClient } = require("redis");
 
@@ -23,9 +23,9 @@ redis_client.on('error', (err) => {
 });
 redis_client.connect();
 
-var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ config, mysql_pool, redis_client });
-var eventsub = require(path.join(__dirname, '..', 'modules', 'eventsub'))({ config, mysql_pool, twitch });
-var discord = require(path.join(__dirname, '..', 'modules', 'discord'))({ config, mysql_pool, twitch });
+var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ mysql_pool, redis_client });
+var eventsub = require(path.join(__dirname, '..', 'modules', 'eventsub'))({ mysql_pool, twitch });
+var discord = require(path.join(__dirname, '..', 'modules', 'discord'))({ mysql_pool, twitch });
 
 
 const subscriber = redis_client.duplicate();
@@ -86,6 +86,8 @@ subscriber
 
 function processUserDie(user_id) {
     console.log('Terminating', user_id);
+
+    // find stored EventSub ID's to termiante
     mysql_pool.query(
         'SELECT eventsub_id FROM eventsub WHERE twitch_user_id = ?',
         [
@@ -103,6 +105,20 @@ function processUserDie(user_id) {
             for (var x=0;x<r.length;x++) {
                 console.log('Terminate', user_id, r[x].eventsub_id);
                 eventsub.unsubscribe(r[x].eventsub_id);
+            }
+        }
+    );
+
+    // force set the channel to Not Live
+    mysql_pool.query(
+        'UPDATE channels SET channel_live = 0 WHERE twitch_user_id = ?',
+        [
+            user_id
+        ],
+        (e,r) => {
+            if (e) {
+                console.log(e);
+                return;
             }
         }
     );

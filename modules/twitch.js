@@ -1,7 +1,7 @@
-const got = require('got');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
 module.exports = function(lib) {
-    let { config, redis_client } = lib;
+    let { redis_client } = lib;
 
     let twitch = {};
 
@@ -13,7 +13,7 @@ module.exports = function(lib) {
 
         redis_client.HGET(
             'twitch_auth',
-            'client_credentials_' + config.twitch.client_id
+            'client_credentials_' + process.env.TWITCH_CLIENT_ID
         )
         .then(loaded_token => {
             // no token create one
@@ -26,17 +26,20 @@ module.exports = function(lib) {
             token = JSON.parse(loaded_token);
 
             // got a token validate it
-            return got({
-                url: 'https://id.twitch.tv/oauth2/validate',
-                method: 'GET',
-                headers: {
-                    'Authorization': 'Bearer ' + token.access_token
-                },
-                responseType: 'json'
-            })
+            return fetch(
+                'https://id.twitch.tv/oauth2/validate',
+                {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token.access_token,
+                        'Accept': 'application/json'
+                    },
+                }
+            )
         })
+        .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
-            console.log('validate', resp.body);
+            console.log('validate resp', resp.body);
             if (!resp.body.expires_in) {
                 createToken();
                 return;
@@ -63,24 +66,31 @@ module.exports = function(lib) {
     }, (30 * 60 * 1000));
 
     function createToken() {
-        got({
-            url: 'https://id.twitch.tv/oauth2/token',
-            method: 'POST',
-            searchParams: {
-                client_id: config.twitch.client_id,
-                client_secret: config.twitch.client_secret,
-                grant_type: 'client_credentials'
-            },
-            responseType: 'json'
-        })
+        let url = new URL('https://id.twitch.tv/oauth2/token');
+        let params = [
+            [ 'client_id', process.env.TWITCH_CLIENT_ID ],
+            [ 'client_secret', process.env.TWITCH_CLIENT_SECRET ],
+            [ 'grant_type', 'client_credentials' ],
+        ]
+        url.search = new URLSearchParams(params).toString();
+
+        fetch(
+            url,
+            {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }
+        )
+        .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
-            var data = resp.body;
-            data.client_id = config.twitch.client_id;
+            resp.body.client_id = process.env.TWITCH_CLIENT_ID;
 
             return redis_client.HSET(
                 'twitch_auth',
-                'client_credentials_' + data.client_id,
-                JSON.stringify(data)
+                'client_credentials_' + resp.body.client_id,
+                JSON.stringify(resp.body)
             );
         })
         .then(r => {
@@ -89,7 +99,7 @@ module.exports = function(lib) {
         })
         .catch(err => {
             if (err.response) {
-                console.error('Token Generate error', err.response.statusCode, err.response.body);
+                console.error('Token Generate error', err.response.status, err.response.body);
             } else {
                 console.error('Token Generate error', err);
             }

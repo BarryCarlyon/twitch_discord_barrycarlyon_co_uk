@@ -1,7 +1,7 @@
-const got = require('got');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
 module.exports = function(lib) {
-    let { config, mysql_pool } = lib;
+    let { mysql_pool } = lib;
 
     let discord = {};
 
@@ -21,15 +21,18 @@ module.exports = function(lib) {
 
                     var notification_id = r.insertId;
 
-                    got({
-                        url,
-                        method: 'POST',
-                        searchParams: {
-                            wait: true
-                        },
-                        json: payload,
-                        responseType: 'json'
-                    })
+                    fetch(
+                        url + '?wait=true',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload),
+                        }
+                    )
+                    .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
                     .then(resp => {
                         console.log('Discord OK', url);
 
@@ -61,12 +64,14 @@ module.exports = function(lib) {
                                     if (del) {
                                         setTimeout(() => {
                                             // delete it
-                                            got({
-                                                url: url + '/messages/' + discord_message_id,
-                                                method: 'DELETE'
-                                            })
+                                            fetch(
+                                                url + '/messages/' + discord_message_id,
+                                                {
+                                                    method: 'DELETE'
+                                                }
+                                            )
                                             .then(resp => {
-                                                console.log('Deleted OK', resp.statusCode);
+                                                console.log('Deleted OK', resp.status);
 
                                                 mysql_pool.query(
                                                     'UPDATE notification_log SET status = ? WHERE id = ?',
@@ -86,7 +91,7 @@ module.exports = function(lib) {
                                             })
                                             .catch(err => {
                                                 if (err.response) {
-                                                    console.log('Delete Failed', err.response.statusCode);
+                                                    console.log('Delete Failed', err.response.status);
                                                 } else {
                                                     console.log('Delete Failed', err);
                                                 }
@@ -104,11 +109,12 @@ module.exports = function(lib) {
                         );
                     })
                     .catch(err => {
+                        console.error(err);
                         var words = '';
                         if (err.response) {
-                            console.error('Discord Error', err.response.statusCode, err.response.body);
+                            console.error('Discord Error', err.response.status, err.response.body);
                             // the oAuth dance failed
-                            words = err.response.body.message;
+                            words = err.responsemessage;
 
                             if (err.response.body.code == 10015) {
                                 // dead Discord webhook

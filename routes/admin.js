@@ -1,8 +1,7 @@
 const express = require('express');
-const got = require('got');
 
 module.exports = function(lib) {
-    let { config, mysql_pool, eventsub, discord } = lib;
+    let { mysql_pool, eventsub, discord } = lib;
 
     const router = express.Router();
 
@@ -83,7 +82,7 @@ module.exports = function(lib) {
                 delete req.session.error_discord;
 
                 res.render('admin/discord_toomany_hooks', {
-                    application_name: config.discord.application_name
+                    application_name: process.env.DISCORD_APPLICATION_NAME
                 });
                 return;
             }
@@ -159,7 +158,7 @@ module.exports = function(lib) {
             req.session.error = 'Failed to create test Notification';
         })
         .finally(() => {
-            console.log('finally');
+            //console.log('finally');
             res.redirect('/admin/');
         });
     });
