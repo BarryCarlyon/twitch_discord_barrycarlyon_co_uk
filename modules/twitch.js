@@ -37,14 +37,14 @@ module.exports = function(lib) {
                 }
             )
         })
-        .then(resp => resp.json())
+        .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
-            console.log('validate resp', resp);
-            if (!resp.expires_in) {
+            console.log('validate resp', resp.body);
+            if (!resp.body.expires_in) {
                 createToken();
                 return;
             }
-            if (resp.expires_in < 3600) {
+            if (resp.body.expires_in < 3600) {
                 createToken();
                 return;
             }
@@ -83,14 +83,14 @@ module.exports = function(lib) {
                 }
             }
         )
-        .then(resp => resp.json())
+        .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
-            resp.client_id = process.env.TWITCH_CLIENT_ID;
+            resp.body.client_id = process.env.TWITCH_CLIENT_ID;
 
             return redis_client.HSET(
                 'twitch_auth',
-                'client_credentials_' + resp.client_id,
-                JSON.stringify(resp)
+                'client_credentials_' + resp.body.client_id,
+                JSON.stringify(resp.body)
             );
         })
         .then(r => {

@@ -7,37 +7,11 @@ module.exports = function(lib) {
     let eventsub = {};
 
     eventsub.validateAndCreate = (twitch_id) => {
-        console.log('Running validate and create for', twitch_id);
+        console.log('Running login and eventsub create for', twitch_id);
 
-        mysql_pool.query(
-            'SELECT * FROM eventsub WHERE twitch_user_id = ?',
-            [
-                twitch_id
-            ],
-            (e,r) => {
-                if (e) {
-                    console.error(e);
-                    return;
-                }
-
-                var hooks = {
-                    'channel.update': false,
-                    'stream.online': false,
-                    'stream.offline': false
-                }
-
-                for (var x=0;x<r.length;x++) {
-                    let { topic, eventsub_id } = r[x];
-                    hooks[topic] = eventsub_id;
-                }
-
-                for (var topic in hooks) {
-                    if (!hooks[topic]) {
-                        eventsub.subscribe(topic, twitch_id);
-                    }
-                }
-            }
-        );
+        eventsub.subscribe('channel.update', twitch_id);
+        eventsub.subscribe('stream.online', twitch_id);
+        eventsub.subscribe('stream.offline', twitch_id);
     }
 
     eventsub.subscribe = (type, broadcaster_user_id) => {
@@ -63,32 +37,28 @@ module.exports = function(lib) {
                 })
             }
         )
-        .then(resp => resp.json())
+        .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
-            console.log('eventsub', type, broadcaster_user_id, resp.status, resp);
+            console.log('eventsub subscribe resp', type, broadcaster_user_id, resp.status, resp.body);
 
-            // DB it
-            mysql_pool.query(''
-                + 'INSERT INTO eventsub (twitch_user_id, topic, eventsub_id) VALUES (?,?,?) '
-                + 'ON DUPLICATE KEY UPDATE eventsub_id = ?',
-                [
-                    broadcaster_user_id,
-                    type,
-                    resp.data[0].id,
-                    resp.data[0].id
-                ],
-                (e,r) => {
-                    if (e) {
-                        console.log('DB Store Error', e);
+            // EventSub 202s
+            if (resp.status >= 200 && resp.status <= 299) {
+                // DB it
+                mysql_pool.query(''
+                    + 'INSERT INTO eventsub (twitch_user_id, topic, eventsub_id) VALUES (?,?,?) '
+                    + 'ON DUPLICATE KEY UPDATE eventsub_id = ?',
+                    [
+                        broadcaster_user_id,
+                        type,
+                        resp.body.data[0].id,
+                        resp.body.data[0].id
+                    ],
+                    (e,r) => {
+                        if (e) {
+                            console.log('DB Store Error', e);
+                        }
                     }
-                }
-            );
-
-            if (type == 'channel.update') {
-                eventsub.preChannel(broadcaster_user_id);
-            }
-            if (type == 'stream.online') {
-                eventsub.preStream(broadcaster_user_id);
+                );
             }
         })
         .catch(err => {
@@ -98,6 +68,14 @@ module.exports = function(lib) {
                 console.error('EventSub Error', type, broadcaster_user_id, err);
             }
         })
+        .finally(() => {
+            if (type == 'channel.update') {
+                eventsub.preChannel(broadcaster_user_id);
+            }
+            if (type == 'stream.online') {
+                eventsub.preStream(broadcaster_user_id);
+            }
+        });
     }
     eventsub.unsubscribe = (id) => {
         // delete
@@ -148,11 +126,11 @@ module.exports = function(lib) {
                 }
             }
         )
-        .then(resp => resp.json())
+        .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
-            if (resp.data && resp.data.length == 1) {
+            if (resp.body.data && resp.body.data.length == 1) {
                 console.log('preChannel got user');
-                user = resp.data[0];
+                user = resp.body.data[0];
             }
 
             return fetch(
@@ -167,9 +145,9 @@ module.exports = function(lib) {
                 }
             );
         })
-        .then(resp => resp.json())
+        .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
-            if (resp.data && resp.data.length == 1) {
+            if (resp.body.data && resp.body.data.length == 1) {
                 console.log('preChannel got channel');
                 mysql_pool.query(''
                     + 'INSERT INTO channels (twitch_user_id, twitch_login, twitch_display_name, channel_title, channel_game) VALUES (?,?,?,?,?) '
@@ -179,13 +157,13 @@ module.exports = function(lib) {
 
                         user.login,
                         user.display_name,
-                        resp.data[0].title,
-                        resp.data[0].game_name,
+                        resp.body.data[0].title,
+                        resp.body.data[0].game_name,
 
                         user.login,
                         user.display_name,
-                        resp.data[0].title,
-                        resp.data[0].game_name
+                        resp.body.data[0].title,
+                        resp.body.data[0].game_name
                     ],
                     (e,r) => {
                         if (e) {
@@ -215,7 +193,7 @@ module.exports = function(lib) {
                 }
             }
         )
-        .then(resp => resp.json())
+        .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
             var live = 0;
             if (resp.body.data && resp.body.data.length == 1) {
@@ -322,23 +300,23 @@ module.exports = function(lib) {
                 }
             }
         )
-        .then(resp => resp.json())
+        .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
-            if (resp.data.length == 0) {
+            if (resp.body.data.length == 0) {
                 console.log('Sub no exist, create');
                 eventsub.createRevoke();
                 return;
             }
 
             var found = false;
-            for (var x=0;x<resp.data.length;x++) {
-                if (resp.data[x].transport.callback == process.env.TWITCH_EVENTSUB_CALLBACK) {
+            for (var x=0;x<resp.body.data.length;x++) {
+                if (resp.body.data[x].transport.callback == process.env.TWITCH_EVENTSUB_CALLBACK) {
                     // this this instance
-                    if (resp.data[x].status == 'enabled') {
+                    if (resp.body.data[x].status == 'enabled') {
                         found = true;
                     } else {
                         console.log('Sub is invalid, delete and create');
-                        eventsub.deleteRevoke(resp.data[0].id);
+                        eventsub.deleteRevoke(resp.body.data[0].id);
                         return;
                     }
                 }

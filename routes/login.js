@@ -49,10 +49,10 @@ module.exports = function(lib) {
                     "body": params
                 }
             )
-            .then(resp => resp.json())
+            .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
             .then(resp => {
                 //console.log(resp);
-                req.session.user.twitch_access = resp;
+                req.session.user.twitch_access = resp.body;
 
                 return fetch(
                     "https://api.twitch.tv/helix/users",
@@ -66,14 +66,14 @@ module.exports = function(lib) {
                     }
                 );
             })
-            .then(resp => resp.json())
+            .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
             .then(resp => {
                 //console.log(resp);
-                if (resp.hasOwnProperty('data') && resp.data.length == 1) {
+                if (resp.body.hasOwnProperty('data') && resp.body.data.length == 1) {
                     // we got an id
                     // is it the same ID as the broadcaster
                     // as the broadcaster is not a moderator on their own channel
-                    req.session.user.twitch = resp.data[0];
+                    req.session.user.twitch = resp.body.data[0];
                     req.session.logged_in = true;
 
                     // need to onboard?
@@ -157,15 +157,15 @@ module.exports = function(lib) {
                     "body": params
                 }
             )
-            .then(resp => resp.json())
+            .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
             .then(resp => {
                 //console.log(resp);
 
-                if (resp.hasOwnProperty('code')) {
-                    throw resp;
+                if (resp.body.hasOwnProperty('code')) {
+                    throw resp.body;
                 }
 
-                req.session.user.discord = resp;
+                req.session.user.discord = resp.body;
 
 
                 // get the user
@@ -180,10 +180,10 @@ module.exports = function(lib) {
                     }
                 );
             })
-            .then(resp => resp.json())
+            .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
             .then(resp => {
                 //console.log(resp);
-                req.session.user.discord_user = resp;
+                req.session.user.discord_user = resp.body;
 
                 if (req.session.user.discord.webhook) {
                     console.log('updating webhook - ' + req.session.user.discord.webhook.id);

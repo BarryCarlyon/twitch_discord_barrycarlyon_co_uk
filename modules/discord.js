@@ -32,11 +32,11 @@ module.exports = function(lib) {
                             body: JSON.stringify(payload),
                         }
                     )
-                    .then(resp => resp.json())
+                    .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
                     .then(resp => {
                         console.log('Discord OK', url);
 
-                        var discord_message_id = resp.id;
+                        var discord_message_id = resp.body.id;
                         var discord_message_url = 'https://discord.com/channels/'
                             + data.discord_guild_id + '/'
                             + data.discord_channel_id + '/'
