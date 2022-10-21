@@ -1,0 +1,28 @@
+{
+  "name": "twitch_discord_barrycarlyon_co_uk",
+  "version": "1.0.0",
+  "description": "A Twitch Go Live notification for Discord using Twitch EventSub",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "twitch",
+    "discord",
+    "golived",
+    "notification"
+  ],
+  "author": "Barry Carlyon",
+  "license": "WTFPL",
+  "dependencies": {
+    "connect-redis": "^6.0.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.2",
+    "got": "^11.8.2",
+    "helmet": "^4.6.0",
+    "mysql": "^2.18.1",
+    "pug": "^3.0.2",
+    "redis": "^3.1.2"
+  }
+}
