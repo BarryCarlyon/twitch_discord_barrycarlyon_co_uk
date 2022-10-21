@@ -1,9 +1,6 @@
-const fs = require('fs');
 const path = require('path');
 
-require('dotenv').config({
-    path: path.join(__dirname, '..', '.env')
-});
+require('dotenv').config();
 
 const mysql = require('mysql');
 const mysql_pool = mysql.createPool({
@@ -26,7 +23,6 @@ redis_client.connect();
 var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ mysql_pool, redis_client });
 var eventsub = require(path.join(__dirname, '..', 'modules', 'eventsub'))({ mysql_pool, twitch });
 var discord = require(path.join(__dirname, '..', 'modules', 'discord'))({ mysql_pool, twitch });
-
 
 const subscriber = redis_client.duplicate();
 subscriber
@@ -173,6 +169,7 @@ function processStreamUp(broadcaster_user_id) {
             }
 
             var eventsub_notification_id = r.insertId;
+            console.log(`Tracking as ${eventsub_notification_id}`);
 
             mysql_pool.query(''
                 + 'SELECT l.discord_guild_id, l.discord_channel_id, l.discord_webhook_url, l.discord_template, '
@@ -230,12 +227,13 @@ function processStreamUp(broadcaster_user_id) {
                         },
                         {
                             content: message,
-                            username: 'BarryCarlyon\'s Discord Notifications',
-                            avatar_url: 'https://twitch.discord.barrycarlyon.co.uk/logo.png',
+                            username: process.env.DISCORD_WEBHOOK_NAME,
+                            avatar_url: process.env.DISCORD_WEBHOOK_LOGO,
                             allowed_mentions: {
                                 parse: [
                                     "everyone",
-                                    "roles"
+                                    "roles",
+                                    "users"
                                 ]
                             }
                         },
@@ -243,7 +241,7 @@ function processStreamUp(broadcaster_user_id) {
                         false
                     )
                     .then(notification_id => {
-                        console.log('woo', broadcaster_user_id);
+                        //console.log('woo', broadcaster_user_id);
                         mysql_pool.query(
                             'UPDATE notification_log SET status = ? WHERE id = ?',
                             [
