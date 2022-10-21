@@ -137,7 +137,7 @@ module.exports = function(lib) {
             },
             {
                 content,
-                username: 'BarryCarlyon\'s Discord Notifications',
+                username: 'BarryCarlyon\'s TwitchCord Notifications',
                 avatar_url: 'https://twitch.discord.barrycarlyon.co.uk/logo.png',
                 allowed_mentions: {
                     parse: [
