@@ -92,11 +92,21 @@ module.exports = function(lib) {
                 // then punt the reset for background processing
                 res.status(200).send('Ok');
 
-                console.log('Got a notification', req.body.subscription.type, 'send', 'twitch_discord:' + req.body.subscription.type);
+                var { subscription } = req.body;
+                var { id, cost, type } = subscription;
+
+                console.log('Got a notification', cost, type, 'send', 'twitch_discord:' + type);
+
+                //if (cost == 1 && type != 'user.authorization.revoke') {
+                //    // cost 1 and not auth revoke
+                //    // destroy
+                //    eventsub.unsubscribe(id);
+                //    return;
+                //}
 
                 // fire and forget
                 redis_client.PUBLISH(
-                    'twitch_discord:' + req.body.subscription.type,
+                    'twitch_discord:' + type,
                     JSON.stringify(req.body)
                 );
 

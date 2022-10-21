@@ -39,34 +39,14 @@ module.exports = function(lib) {
         )
         .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
-            console.log('eventsub subscribe resp', type, broadcaster_user_id, resp.status, resp.body);
-
-            // EventSub 202s
-            if (resp.status >= 200 && resp.status <= 299) {
-                // DB it
-                mysql_pool.query(''
-                    + 'INSERT INTO eventsub (twitch_user_id, topic, eventsub_id) VALUES (?,?,?) '
-                    + 'ON DUPLICATE KEY UPDATE eventsub_id = ?',
-                    [
-                        broadcaster_user_id,
-                        type,
-                        resp.body.data[0].id,
-                        resp.body.data[0].id
-                    ],
-                    (e,r) => {
-                        if (e) {
-                            console.log('DB Store Error', e);
-                        }
-                    }
-                );
+            if (resp.status == 409) {
+                // all good
+            } else {
+                console.log('eventsub subscribe resp', type, broadcaster_user_id, resp.status, resp.body);
             }
         })
         .catch(err => {
-            if (err.response) {
-                console.log('EventSub Error', type, broadcaster_user_id, err.response.status, err.response.body);
-            } else {
-                console.error('EventSub Error', type, broadcaster_user_id, err);
-            }
+            console.error('EventSub Error', type, broadcaster_user_id, err);
         })
         .finally(() => {
             if (type == 'channel.update') {
@@ -77,6 +57,40 @@ module.exports = function(lib) {
             }
         });
     }
+
+    eventsub.getSubscriptions = async(user_id) => {
+        let eventsub_request = await fetch(
+            `https://api.twitch.tv/helix/eventsub/subscriptions?user_id=${user_id}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Client-ID': process.env.TWITCH_CLIENT_ID,
+                    'Authorization': 'Bearer ' + twitch.access_token,
+                    'Accept': 'application/json'
+                }
+            }
+        );
+
+        if (eventsub_request.status != 200) {
+            console.log(`Failed to get subscriptions ${user_id}`);
+            return [];
+        }
+
+        let eventsub_data = await eventsub_request.json();
+
+        //console.log('got data', eventsub_data);
+        return eventsub_data.data;
+    }
+
+    eventsub.userUnsubscribe = async (eventsub_data) => {
+        eventsub_data.data.forEach(item => {
+            let { id, status } = item;
+            if (status == 'enabled') {
+                eventsub.unsubscribe(id);
+            }
+        });
+    }
+
     eventsub.unsubscribe = (id) => {
         // delete
         fetch(
@@ -94,22 +108,6 @@ module.exports = function(lib) {
         })
         .catch(err => {
             console.error('Failed with', err.response.status);
-        })
-        .finally(() => {
-            console.log('Delete cache', id);
-            mysql_pool.query(
-                'DELETE FROM eventsub WHERE eventsub_id = ?',
-                [
-                    id
-                ],
-                (e,r) => {
-                    if (e) {
-                        console.log('Delete', e);
-                    } else {
-                        console.log('Delete', r);
-                    }
-                }
-            );
         });
     }
 

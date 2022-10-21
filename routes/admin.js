@@ -18,7 +18,7 @@ module.exports = function(lib) {
             [
                 req.session.user.twitch.id
             ],
-            (e,r) => {
+            async (e,r) => {
                 if (e) {
                     req.session.error = 'A database error occured';
                     req.session.logged_in = false;
@@ -33,8 +33,11 @@ module.exports = function(lib) {
                     eventsub.validateAndCreate(req.session.user.twitch.id);
                 }
 
+                let topics = await eventsub.getSubscriptions(req.session.user.twitch.id);
+                res.locals.eventsub = topics.length;
+
                 mysql_pool.query(
-                    'SELECT topic FROM eventsub WHERE twitch_user_id = ?',
+                    'SELECT * FROM channels WHERE twitch_user_id = ?',
                     [
                         req.session.user.twitch.id
                     ],
@@ -46,31 +49,13 @@ module.exports = function(lib) {
                             return;
                         }
 
-                        res.locals.eventsub = r.length;
+                        res.locals.channel_data = r[0] ? r[0] : false;
 
-                        mysql_pool.query(
-                            'SELECT * FROM channels WHERE twitch_user_id = ?',
-                            [
-                                req.session.user.twitch.id
-                            ],
-                            (e,r) => {
-                                if (e) {
-                                    req.session.error = 'A database error occured';
-                                    req.session.logged_in = false;
-                                    res.redirect('/');
-                                    return;
-                                }
-
-                                res.locals.channel_data = r[0] ? r[0] : false;
-
-                                next();
-                            }
-                        );
+                        next();
                     }
                 );
-                return;
 
-                next();
+                return;
             }
         );
     });

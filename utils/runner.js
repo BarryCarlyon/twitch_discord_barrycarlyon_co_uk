@@ -77,33 +77,16 @@ subscriber
             }
         );
     });
-    // @Todo: if cost 1 kill subs for user
+    // @Todo: if cost 1 kill subs for user?
 
 
-function processUserDie(user_id) {
+async function processUserDie(user_id) {
     console.log('Terminating', user_id);
+    // delete all data
 
-    // find stored EventSub ID's to termiante
-    mysql_pool.query(
-        'SELECT eventsub_id FROM eventsub WHERE twitch_user_id = ?',
-        [
-            user_id
-        ],
-        (e,r) => {
-            if (e) {
-                console.log(e);
-                return;
-            }
-            if (r.length == 0) {
-                console.log('Nothing to revoke');
-                return;
-            }
-            for (var x=0;x<r.length;x++) {
-                console.log('Terminate', user_id, r[x].eventsub_id);
-                eventsub.unsubscribe(r[x].eventsub_id);
-            }
-        }
-    );
+    // unsubscribe
+    let subscriptions = await eventsub.getSubscriptions(r[x].eventsub_id);
+    eventsub.userUnsubscribe(subscriptions);
 
     // force set the channel to Not Live
     mysql_pool.query(
