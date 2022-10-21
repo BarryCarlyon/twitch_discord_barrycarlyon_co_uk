@@ -23,9 +23,9 @@ It uses the following API reference documentation
 
 This system uses MySQL as a Database backend and Redis for session handling and message brokering between the two services
 
-- Import `sql/barrys_discord_twitch.sql`
+- Import `sql/barrys_discord_twitch.sql` to your MySQL database
 
-- Copy `config_sample.json` to `config.json`
+- Copy `.env.sample` to `.env`
 - Revise the settings within, for your Discord Application and Twitch Applications.
 - Revise that database access settings
 - Make sure to update the URLs, and Twitch EventSub
