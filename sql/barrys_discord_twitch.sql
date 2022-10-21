@@ -19,16 +19,6 @@ CREATE TABLE `channels` (
   UNIQUE KEY `channels_twitch_user_id_idx` (`twitch_user_id`) USING BTREE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
-CREATE TABLE `eventsub` (
-  `ref_id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `twitch_user_id` varchar(25) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `topic` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `eventsub_id` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  UNIQUE KEY `ref_id` (`ref_id`),
-  UNIQUE KEY `eventsub_twitch_user_id_topic_idx` (`twitch_user_id`,`topic`) USING BTREE,
-  KEY `eventsub_twitch_user_id_idx` (`twitch_user_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
 CREATE TABLE `links` (
   `ref_id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `twitch_user_id` varchar(25) COLLATE utf8mb4_general_ci DEFAULT NULL,
