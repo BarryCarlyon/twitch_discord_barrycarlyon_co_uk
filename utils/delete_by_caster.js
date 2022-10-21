@@ -7,16 +7,6 @@ require('dotenv').config({
     path: path.join(__dirname, '..', '.env')
 });
 
-const mysql = require('mysql');
-const mysql_pool = mysql.createPool({
-    "host":             process.env.DATABASE_HOST,
-    "user":             process.env.DATABASE_USER,
-    "password":         process.env.DATABASE_PASSWORD,
-    "database":         process.env.DATABASE_DATABASE,
-    "connectionLimit":  2,
-    "charset":          process.env.DATABASE_CHARSET
-});
-
 const { createClient } = require("redis");
 
 const redis_client = createClient();
@@ -24,7 +14,6 @@ redis_client.on('error', (err) => {
     console.error('REDIS Error', err);
 });
 redis_client.connect();
-
 
 var twitch = require(path.join(__dirname, '..', 'modules', 'twitch'))({ redis_client });
 
@@ -36,10 +25,13 @@ const rl = readline.createInterface({
 
 process.on('twitch_token', (thing) => {
     rl.question('TwitchID> ', (id) => {
+        rl.close();
+        redis_client.quit();
+
         console.log('Get and nail', id);
 
         fetch(
-            'https://api.twitch.tv/helix/eventsub/subscriptions',
+            `https://api.twitch.tv/helix/eventsub/subscriptions?user_id=${id}`,
             {
                 headers: {
                     'Client-ID': process.env.TWITCH_CLIENT_ID,
@@ -53,10 +45,8 @@ process.on('twitch_token', (thing) => {
             console.log('Found', resp.data.length);
             for (var x=0;x<resp.data.length;x++) {
                 console.log(x, resp.data[x].type, resp.data[x].condition.broadcaster_user_id, id);
-                if (resp.data[x].condition.broadcaster_user_id == id) {
-                    wackmax++;
-                    deleteHook(resp.data[x].id);
-                }
+                wackmax++;
+                deleteHook(resp.data[x].id);
             }
             if (wackmax == 0) {
                 console.log('Nothing to wack');
