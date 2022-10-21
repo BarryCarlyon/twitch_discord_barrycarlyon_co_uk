@@ -40,7 +40,7 @@ module.exports = function(lib) {
                             if (resp.body.code == 10015) {
                                 // dead Discord webhook
                                 mysql_pool.query(
-                                    'UPDATE links SET discord_webhook_id = null, discord_webhook_token = null, discord_webhook_url = null WHERE discord_webhook_url = ?',
+                                    'DELETE FROM links WHERE WHERE discord_webhook_url = ?'
                                     [
                                         url
                                     ],
@@ -51,7 +51,7 @@ module.exports = function(lib) {
                                     }
                                 );
                                 // _probably_ need to kill the Twitch EventSubs?
-                                return reject(err);
+                                return reject();
                             }
 
                             // another problem?
@@ -69,7 +69,7 @@ module.exports = function(lib) {
                                 }
                             );
 
-                            return reject(err);
+                            return reject();
                         }
 
                         var discord_message_id = resp.body.id;
