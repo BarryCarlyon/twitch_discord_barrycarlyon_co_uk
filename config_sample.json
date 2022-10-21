@@ -15,7 +15,9 @@
         "client_id":        "",
         "client_secret":    "",
         "redirect_uri":     "https://some.url.tld/login/discord/",
-        "application_name": "BarryCarlyon's Discord Notifications"
+        "application_name": "BarryCarlyon's TwitchCord Notifications",
+        "webhook_name":     "BarryCarlyon's TwitchCord Notifications",
+        "webhook_logo":     "https://some.url.tld/someimage.png",
     },
     "server": {
         "listen":           8000

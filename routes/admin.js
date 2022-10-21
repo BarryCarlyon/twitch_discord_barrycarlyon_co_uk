@@ -137,8 +137,8 @@ module.exports = function(lib) {
             },
             {
                 content,
-                username: 'BarryCarlyon\'s TwitchCord Notifications',
-                avatar_url: 'https://twitch.discord.barrycarlyon.co.uk/logo.png',
+                username: config.discord.webhook_name,
+                avatar_url: config.discord.webhook_logo,
                 allowed_mentions: {
                     parse: [
                         "everyone",
