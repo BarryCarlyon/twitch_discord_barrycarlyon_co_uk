@@ -29,7 +29,6 @@ module.exports = function(lib) {
             delete req.session.state;
 
             // oauth exchange
-
             let oauth_params = [
                 [ "client_id",      process.env.TWITCH_CLIENT_ID ],
                 [ "client_secret",  process.env.TWITCH_CLIENT_SECRET ],

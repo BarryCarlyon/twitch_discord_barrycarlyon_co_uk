@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 
 const express = require('express');
@@ -66,7 +65,6 @@ const RedisStore = require('connect-redis')(session);
 // for other options you may want to use something more specific than a true
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
-
 // security see https://expressjs.com/en/advanced/best-practice-security.html
 
 let sessionRedis = createClient({ legacyMode: true })
@@ -138,9 +136,7 @@ app.use((req, res, next) => {
         delete req.session.success;
     }
 
-    // temp debug
     res.locals.session = req.session;
-    //res.locals.debug_session = JSON.stringify(req.session, null, 4);
 
     next();
 });

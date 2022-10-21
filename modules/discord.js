@@ -34,7 +34,43 @@ module.exports = function(lib) {
                     )
                     .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
                     .then(resp => {
-                        console.log('Discord OK', url);
+                        console.log('Discord Result', resp.status, resp.body);
+
+                        if (resp.status != 200) {
+                            if (resp.body.code == 10015) {
+                                // dead Discord webhook
+                                mysql_pool.query(
+                                    'UPDATE links SET discord_webhook_id = null, discord_webhook_token = null, discord_webhook_url = null WHERE discord_webhook_url = ?',
+                                    [
+                                        url
+                                    ],
+                                    (e,r) => {
+                                        if (e) {
+                                            console.log(e);
+                                        }
+                                    }
+                                );
+                                // _probably_ need to kill the Twitch EventSubs?
+                                return reject(err);
+                            }
+
+                            // another problem?
+                            mysql_pool.query(
+                                'UPDATE notification_log SET status = ?, status_words = ? WHERE id = ?',
+                                [
+                                    2,
+                                    resp.body.message,
+                                    notification_id
+                                ],
+                                (e,r) => {
+                                    if (e) {
+                                        console.log(e);
+                                    }
+                                }
+                            );
+
+                            return reject(err);
+                        }
 
                         var discord_message_id = resp.body.id;
                         var discord_message_url = 'https://discord.com/channels/'
@@ -109,39 +145,14 @@ module.exports = function(lib) {
                         );
                     })
                     .catch(err => {
-                        console.error(err);
-                        var words = '';
-                        if (err.response) {
-                            console.error('Discord Error', err.response.status, err.response.body);
-                            // the oAuth dance failed
-                            words = err.responsemessage;
-
-                            if (err.response.body.code == 10015) {
-                                // dead Discord webhook
-                                mysql_pool.query(
-                                    'UPDATE links SET discord_webhook_id = null, discord_webhook_token = null, discord_webhook_url = null WHERE discord_webhook_url = ?',
-                                    [
-                                        url
-                                    ],
-                                    (e,r) => {
-                                        if (e) {
-                                            console.log(e);
-                                        }
-                                    }
-                                );
-                                // _probably_ need to kill the Twitch EventSubs?
-                            }
-                        } else {
-                            console.error('Discord Error', err);
-                            words = 'Unknown';
-                        }
+                        console.error('Discord Error', err);
 
                         // screw this paticular DB error
                         mysql_pool.query(
                             'UPDATE notification_log SET status = ?, status_words = ? WHERE id = ?',
                             [
                                 2,
-                                words,
+                                'Unknown',
                                 notification_id
                             ],
                             (e,r) => {
