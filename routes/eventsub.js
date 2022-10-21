@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const tsscmp = require('tsscmp');
 
 module.exports = function(lib) {
-    let { config, mysql_pool, eventsub, redis_client } = lib;
+    let { mysql_pool, eventsub, redis_client } = lib;
 
     const router = express.Router();
 
@@ -22,14 +22,14 @@ module.exports = function(lib) {
                 let [ signatureAlgo, signatureHash ] = req.headers['twitch-eventsub-message-signature'].split('=');
 
                 // you could do
-                // req.twitch_hex = crypto.createHmac(xHub[0], config.hook_secret)
+                // req.twitch_hex = crypto.createHmac(xHub[0], hook_secret)
                 // but we know Twitch always uses sha256
                 if (signatureAlgo !== 'sha256') {
                     console.log('Signature algo not matched');
                     return false;
                 }
 
-                const ourSignatureHash = crypto.createHmac('sha256', config.twitch.eventsub.secret)
+                const ourSignatureHash = crypto.createHmac('sha256', process.env.TWITCH_EVENTSUB_SECRET)
                     .update(`${message_id}${timestamp}${buf}`)
                     .digest('hex');
 

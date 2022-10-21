@@ -1,7 +1,7 @@
-const got = require('got');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 
 module.exports = function(lib) {
-    let { config, mysql_pool } = lib;
+    let { mysql_pool } = lib;
 
     let discord = {};
 
@@ -21,17 +21,56 @@ module.exports = function(lib) {
 
                     var notification_id = r.insertId;
 
-                    got({
-                        url,
-                        method: 'POST',
-                        searchParams: {
-                            wait: true
-                        },
-                        json: payload,
-                        responseType: 'json'
-                    })
+                    fetch(
+                        url + '?wait=true',
+                        {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(payload),
+                        }
+                    )
+                    .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
                     .then(resp => {
-                        console.log('Discord OK', url);
+                        console.log('Discord Result', resp.status, resp.body);
+
+                        if (resp.status != 200) {
+                            if (resp.body.code == 10015) {
+                                // dead Discord webhook
+                                mysql_pool.query(
+                                    'DELETE FROM links WHERE WHERE discord_webhook_url = ?'
+                                    [
+                                        url
+                                    ],
+                                    (e,r) => {
+                                        if (e) {
+                                            console.log(e);
+                                        }
+                                    }
+                                );
+                                // _probably_ need to kill the Twitch EventSubs?
+                                return reject();
+                            }
+
+                            // another problem?
+                            mysql_pool.query(
+                                'UPDATE notification_log SET status = ?, status_words = ? WHERE id = ?',
+                                [
+                                    2,
+                                    resp.body.message,
+                                    notification_id
+                                ],
+                                (e,r) => {
+                                    if (e) {
+                                        console.log(e);
+                                    }
+                                }
+                            );
+
+                            return reject();
+                        }
 
                         var discord_message_id = resp.body.id;
                         var discord_message_url = 'https://discord.com/channels/'
@@ -61,12 +100,14 @@ module.exports = function(lib) {
                                     if (del) {
                                         setTimeout(() => {
                                             // delete it
-                                            got({
-                                                url: url + '/messages/' + discord_message_id,
-                                                method: 'DELETE'
-                                            })
+                                            fetch(
+                                                url + '/messages/' + discord_message_id,
+                                                {
+                                                    method: 'DELETE'
+                                                }
+                                            )
                                             .then(resp => {
-                                                console.log('Deleted OK', resp.statusCode);
+                                                console.log('Deleted OK', resp.status);
 
                                                 mysql_pool.query(
                                                     'UPDATE notification_log SET status = ? WHERE id = ?',
@@ -86,7 +127,7 @@ module.exports = function(lib) {
                                             })
                                             .catch(err => {
                                                 if (err.response) {
-                                                    console.log('Delete Failed', err.response.statusCode);
+                                                    console.log('Delete Failed', err.response.status);
                                                 } else {
                                                     console.log('Delete Failed', err);
                                                 }
@@ -104,38 +145,14 @@ module.exports = function(lib) {
                         );
                     })
                     .catch(err => {
-                        var words = '';
-                        if (err.response) {
-                            console.error('Discord Error', err.response.statusCode, err.response.body);
-                            // the oAuth dance failed
-                            words = err.response.body.message;
-
-                            if (err.response.body.code == 10015) {
-                                // dead Discord webhook
-                                mysql_pool.query(
-                                    'UPDATE links SET discord_webhook_id = null, discord_webhook_token = null, discord_webhook_url = null WHERE discord_webhook_url = ?',
-                                    [
-                                        url
-                                    ],
-                                    (e,r) => {
-                                        if (e) {
-                                            console.log(e);
-                                        }
-                                    }
-                                );
-                                // _probably_ need to kill the Twitch EventSubs?
-                            }
-                        } else {
-                            console.error('Discord Error', err);
-                            words = 'Unknown';
-                        }
+                        console.error('Discord Error', err);
 
                         // screw this paticular DB error
                         mysql_pool.query(
                             'UPDATE notification_log SET status = ?, status_words = ? WHERE id = ?',
                             [
                                 2,
-                                words,
+                                'Unknown',
                                 notification_id
                             ],
                             (e,r) => {

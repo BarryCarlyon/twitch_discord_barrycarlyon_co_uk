@@ -1,14 +1,10 @@
-const fs = require('fs');
 const path = require('path');
 
 const express = require('express');
 
 const crypto = require('crypto');
 
-const config = JSON.parse(fs.readFileSync(path.join(
-    __dirname,
-    'config.json'
-)));
+require('dotenv').config()
 
 /*
 Server
@@ -28,12 +24,19 @@ app.use('/', express.static(path.join(__dirname, 'public')));
 
 /* interfaces */
 const http = require('http').Server(app);
-http.listen(config.server.listen, () => {
-    console.log('Server raised on', config.server.listen);
+http.listen(process.env.SERVER_LISTEN, () => {
+    console.log('Server raised on', process.env.SERVER_LISTEN);
 });
 
 const mysql = require('mysql');
-const mysql_pool = mysql.createPool(config.database);
+const mysql_pool = mysql.createPool({
+    "host":             process.env.DATABASE_HOST,
+    "user":             process.env.DATABASE_USER,
+    "password":         process.env.DATABASE_PASSWORD,
+    "database":         process.env.DATABASE_DATABASE,
+    "connectionLimit":  process.env.DATABASE_CONNECTIONLIMIT,
+    "charset":          process.env.DATABASE_CHARSET
+});
 
 const { createClient } = require("redis");
 
@@ -62,7 +65,6 @@ const RedisStore = require('connect-redis')(session);
 // for other options you may want to use something more specific than a true
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
-
 // security see https://expressjs.com/en/advanced/best-practice-security.html
 
 let sessionRedis = createClient({ legacyMode: true })
@@ -79,7 +81,7 @@ app.use(session({
     cookie: {
         secure: true,
         httpOnly: true,
-        domain: config.server.domain
+        domain: process.env.SERVER_DOMAIN
     },
     rolling: true
 }));
@@ -118,12 +120,12 @@ app.use((err, req, res, next) => {
 register some pug globals
 */
 app.use((req, res, next) => {
-    if (req.hostname != config.server.domain) {
-        res.redirect(`https://${config.server.domain}${req.originalUrl}`);
+    if (req.hostname != process.env.SERVER_DOMAIN) {
+        res.redirect(`https://${process.env.SERVER_DOMAIN}${req.originalUrl}`);
         return;
     }
 
-    res.locals.twitch_client_id = config.twitch.client_id;
+    res.locals.twitch_client_id = process.env.TWITCH_CLIENT_ID;
     if (req.session.error) {
         res.locals.error = req.session.error;
         delete req.session.error;
@@ -134,9 +136,7 @@ app.use((req, res, next) => {
         delete req.session.success;
     }
 
-    // temp debug
     res.locals.session = req.session;
-    //res.locals.debug_session = JSON.stringify(req.session, null, 4);
 
     next();
 });
@@ -154,14 +154,14 @@ app.get('/privacy', (req,res) => {
 });
 
 // modules
-var twitch = require(path.join(__dirname, 'modules', 'twitch'))({ config, mysql_pool, redis_client });
-var eventsub = require(path.join(__dirname, 'modules', 'eventsub'))({ config, mysql_pool, twitch });
-var discord = require(path.join(__dirname, 'modules', 'discord'))({ config, mysql_pool, twitch });
+var twitch = require(path.join(__dirname, 'modules', 'twitch'))({ mysql_pool, redis_client });
+var eventsub = require(path.join(__dirname, 'modules', 'eventsub'))({ mysql_pool, twitch });
+var discord = require(path.join(__dirname, 'modules', 'discord'))({ mysql_pool, twitch });
 
 // routes
-app.use('/eventsub/', require(path.join(__dirname, 'routes', 'eventsub'))({ config, mysql_pool, eventsub, redis_client }));
-app.use('/login/', require(path.join(__dirname, 'routes', 'login'))({ config, mysql_pool }));
-app.use('/admin/', require(path.join(__dirname, 'routes', 'admin'))({ config, mysql_pool, eventsub, discord }));
+app.use('/eventsub/', require(path.join(__dirname, 'routes', 'eventsub'))({ mysql_pool, eventsub, redis_client }));
+app.use('/login/', require(path.join(__dirname, 'routes', 'login'))({ mysql_pool }));
+app.use('/admin/', require(path.join(__dirname, 'routes', 'admin'))({ mysql_pool, eventsub, discord }));
 
 // backup route
 app.get('/', (req,res) => {

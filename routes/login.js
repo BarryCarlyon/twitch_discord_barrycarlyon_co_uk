@@ -1,9 +1,9 @@
 const express = require('express');
-const got = require('got');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
 const crypto = require('crypto');
 
 module.exports = function(lib) {
-    let { config, mysql_pool } = lib;
+    let { mysql_pool } = lib;
 
     const router = express.Router();
 
@@ -29,37 +29,46 @@ module.exports = function(lib) {
             delete req.session.state;
 
             // oauth exchange
-            got({
-                "url": "https://id.twitch.tv/oauth2/token",
-                "method": 'POST',
-                "headers": {
-                    "Accept": "application/json"
-                },
-                "form": {
-                    "client_id": config.twitch.client_id,
-                    "client_secret": config.twitch.client_secret,
-                    code,
-                    "grant_type": "authorization_code",
-                    "redirect_uri": config.twitch.redirect_uri
-                },
-                "responseType": "json"
-            })
+            let oauth_params = [
+                [ "client_id",      process.env.TWITCH_CLIENT_ID ],
+                [ "client_secret",  process.env.TWITCH_CLIENT_SECRET ],
+                [ "code",           code ],
+                [ "grant_type",     "authorization_code" ],
+                [ "redirect_uri",    process.env.TWITCH_REDIRECT_URI ],
+            ]
+            const params = new URLSearchParams(oauth_params);
+
+            fetch(
+                "https://id.twitch.tv/oauth2/token",
+                {
+                    "method": 'POST',
+                    "headers": {
+                        "Accept": "application/json"
+                    },
+                    "body": params
+                }
+            )
+            .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
             .then(resp => {
+                //console.log(resp);
                 req.session.user.twitch_access = resp.body;
 
-                return got({
-                    "url": "https://api.twitch.tv/helix/users",
-                    "method": "GET",
-                    "headers": {
-                        "Accept": "application/json",
-                        "Client-ID": config.twitch.client_id,
-                        "Authorization": 'Bearer ' + req.session.user.twitch_access.access_token
-                    },
-                    "responseType": "json"
-                });
+                return fetch(
+                    "https://api.twitch.tv/helix/users",
+                    {
+                        "method": "GET",
+                        "headers": {
+                            "Accept": "application/json",
+                            "Client-ID": process.env.TWITCH_CLIENT_ID,
+                            "Authorization": 'Bearer ' + req.session.user.twitch_access.access_token
+                        }
+                    }
+                );
             })
+            .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
             .then(resp => {
-                if (resp.body && resp.body.data && resp.body.data.length == 1) {
+                //console.log(resp);
+                if (resp.body.hasOwnProperty('data') && resp.body.data.length == 1) {
                     // we got an id
                     // is it the same ID as the broadcaster
                     // as the broadcaster is not a moderator on their own channel
@@ -94,8 +103,8 @@ module.exports = function(lib) {
 
             res.redirect(''
                 + 'https://id.twitch.tv/oauth2/authorize'
-                + '?client_id=' + config.twitch.client_id
-                + '&redirect_uri=' + encodeURIComponent(config.twitch.redirect_uri)
+                + '?client_id=' + process.env.TWITCH_CLIENT_ID
+                + '&redirect_uri=' + encodeURIComponent(process.env.TWITCH_REDIRECT_URI)
                 + '&response_type=code'
                 + '&state=' + encodeURIComponent(req.session.state)
             );
@@ -127,42 +136,56 @@ module.exports = function(lib) {
             }
             delete req.session.state;
 
+            let oauth_params = [
+                [ "client_id",      process.env.DISCORD_CLIENT_ID ],
+                [ "client_secret",  process.env.DISCORD_CLIENT_SECRET ],
+                [ "code",           code ],
+                [ "grant_type",     "authorization_code" ],
+                [ "redirect_uri",    process.env.DISCORD_REDIRECT_URI ],
+            ]
+            const params = new URLSearchParams(oauth_params);
+
             // oauth exchange
-            got({
-                "url": "https://discord.com/api/oauth2/token",
-                "method": 'POST',
-                "headers": {
-                    "Accept": "application/json"
-                },
-                "form": {
-                    "client_id": config.discord.client_id,
-                    "client_secret": config.discord.client_secret,
-                    code,
-                    "grant_type": "authorization_code",
-                    "redirect_uri": config.discord.redirect_uri
-                },
-                "responseType": "json"
-            })
+            fetch(
+                "https://discord.com/api/oauth2/token",
+                {
+                    "method": 'POST',
+                    "headers": {
+                        "Accept": "application/json"
+                    },
+                    "body": params
+                }
+            )
+            .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
             .then(resp => {
+                //console.log(resp);
+
+                if (resp.body.hasOwnProperty('code')) {
+                    throw resp.body;
+                }
+
                 req.session.user.discord = resp.body;
-                console.log(resp.body);
+
 
                 // get the user
-                return got({
-                    "url": "https://discord.com/api/users/@me",
-                    "method": "GET",
-                    "headers": {
-                        "Accept": "application/json",
-                        "Authorization": "Bearer " + resp.body.access_token
-                    },
-                    "responseType": "json"
-                })
+                return fetch(
+                    "https://discord.com/api/users/@me",
+                    {
+                        "method": "GET",
+                        "headers": {
+                            "Accept": "application/json",
+                            "Authorization": "Bearer " + resp.access_token
+                        }
+                    }
+                );
             })
+            .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
             .then(resp => {
-                console.log(resp.body);
+                //console.log(resp);
                 req.session.user.discord_user = resp.body;
 
                 if (req.session.user.discord.webhook) {
+                    console.log('updating webhook - ' + req.session.user.discord.webhook.id);
                     mysql_pool.query(''
                         + 'INSERT INTO links (twitch_user_id, discord_user_id, discord_guild_id, discord_channel_id, discord_webhook_id, discord_webhook_token, discord_webhook_url) VALUES (?,?,?,?,?,?,?) '
                         + 'ON DUPLICATE KEY UPDATE twitch_user_id = ?, discord_user_id = ?, discord_guild_id = ?, discord_channel_id = ?, discord_webhook_id = ?, discord_webhook_token = ?, discord_webhook_url = ?',
@@ -192,51 +215,26 @@ module.exports = function(lib) {
                                 return;
                             }
 
-                            console.log(r);
+                            //console.log(r);
                             req.session.success = 'Connected and created a Webhook';
                             res.redirect('/admin/');
-
-/*
-                            // revise some data
-                            got({
-                                "url": "https://discord.com/api/v8"
-                                    + "/webhooks/" + req.session.user.discord.webhook.id
-                                    + '/' + req.session.user.discord.webhook.token,
-                                "method": "GET",
-                                "headers": {
-                                    "Accept": "application/json",
-                                    "Authorization": "Bearer " + req.session.user.discord.access_token
-                                },
-                                "responseType": "json"
-                            })
-                            .then(resp => {
-                                res.json(resp.body);
-                            })
-                            .catch(err => {
-                                if (err.response) {
-                                    console.error('Code exchange Error:', err.response.body);
-                                    // the oAuth dance failed
-                                    req.session.error = 'An Error occured: ' + ((err.response && err.response.body.message) ? err.response.body.message : 'Unknown');
-                                } else {
-                                    req.session.error = 'Code exchange Bad Error',
-                                    console.log('Error', err);
-                                }
-
-                                res.redirect('/admin/');
-                            })
-*/
                         }
                     );
 
                     return;
                 }
 
+                //console.log(resp);
+
                 req.session.error = 'No Webhook Created by Discord';
                 res.redirect('/admin/');
             })
             .catch(err => {
-                if (err.response) {
-                    console.error('Discord Error', err.response.statusCode, err.response.body);
+                if (err.code) {
+                    req.session.error = 'Discord Error: ' + err.message,
+                    req.session.error_discord = err.code;
+                } else if (err.response) {
+                    console.error('Discord Error', err.response.status, err.response.body);
                     // the oAuth dance failed
                     req.session.error = 'An Error occured: ' + ((err.response && err.response.body.message) ? err.response.body.message : 'Unknown');
                     req.session.error_discord = err.response.body.code;
@@ -256,8 +254,8 @@ module.exports = function(lib) {
 
             res.redirect(''
                 + 'https://discord.com/api/oauth2/authorize'
-                + '?client_id=' + config.discord.client_id
-                + '&redirect_uri=' + encodeURIComponent(config.discord.redirect_uri)
+                + '?client_id=' + process.env.DISCORD_CLIENT_ID
+                + '&redirect_uri=' + encodeURIComponent(process.env.DISCORD_REDIRECT_URI)
                 + '&response_type=code'
                 + '&scope=identify+webhook.incoming'
                 + '&state=' + encodeURIComponent(req.session.state)
