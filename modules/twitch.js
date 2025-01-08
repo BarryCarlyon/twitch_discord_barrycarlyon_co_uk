@@ -15,8 +15,8 @@ module.exports = function(lib) {
         )
         .then(loaded_token => {
             // no token create one
-            if (!loaded_token) {
-                throw new Error('No Token Generate');
+            if (!loaded_token || loaded_token == '') {
+                throw new Error('No Token on file');
                 return;
             }
 
@@ -83,6 +83,10 @@ module.exports = function(lib) {
         )
         .then(resp => resp.json().then(data => ({ status: resp.status, body: data })))
         .then(resp => {
+            if (resp.status != 200) {
+                // die
+                throw new Error('Failed to generate token', resp.body);
+            }
             resp.body.client_id = process.env.TWITCH_CLIENT_ID;
 
             return redis_client.HSET(
