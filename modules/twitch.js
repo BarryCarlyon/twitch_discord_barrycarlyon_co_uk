@@ -1,5 +1,3 @@
-const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args))
-
 module.exports = function(lib) {
     let { redis_client } = lib;
 
